@@ -776,6 +776,39 @@ document.addEventListener('keydown', function (e) {
   handleSelectOption(digit);
 });
 
+/**
+ * Returns the button Enter should activate for the current screen, so a
+ * keyboard-only user never has to reach for the mouse to advance.
+ */
+function getPrimaryButtonForScreen() {
+  switch (state.screen) {
+    case 'resume':   return document.getElementById('resume-btn');
+    case 'question': return document.getElementById('next-btn');
+    case 'complete': return document.getElementById('retry-submit-btn') || document.getElementById('new-session-btn');
+    default:         return null;
+  }
+}
+
+/**
+ * Enter activates the primary button on the current screen. Skipped for
+ * text inputs (the login screen wires its own Enter handling per field)
+ * and for a focused Likert option (its own handler owns Enter there, to
+ * select rather than advance).
+ */
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter') return;
+
+  const tag = (e.target && e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea') return;
+  if (e.target && e.target.classList && e.target.classList.contains('likert-option')) return;
+
+  const btn = getPrimaryButtonForScreen();
+  if (btn && !btn.disabled) {
+    e.preventDefault();
+    btn.click();
+  }
+});
+
 /* ─────────────────────────────────────────
    BOOT
    ───────────────────────────────────────── */
