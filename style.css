@@ -283,24 +283,21 @@ input[type="email"]:focus {
   border-bottom: 1px solid var(--border);
   background: var(--bg);
 }
+.q-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.q-brand-mark svg { display: block; width: 20px; height: 20px; }
+.q-brand-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
 .q-user-name {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.q-user-name::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-.q-position {
-  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -344,27 +341,6 @@ input[type="email"]:focus {
 
 /* Question body */
 .q-body { padding: 1.5rem 1.25rem 1.25rem; }
-
-.skill-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 11px;
-  background: var(--accent-light);
-  color: var(--accent);
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 1.125rem;
-}
-
-.q-number {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  margin-bottom: 0.4rem;
-}
 
 .q-statement {
   font-family: var(--font-display);
@@ -512,9 +488,55 @@ input[type="email"]:focus {
   margin-left: auto;
   margin-right: auto;
 }
+.saved-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--kendra-teal);
+  background: #E8F9F6;
+  padding: 8px 14px;
+  border-radius: 99px;
+  margin: 0 auto 1.75rem;
+}
+.saved-indicator-pending {
+  color: var(--text-secondary);
+  background: var(--bg);
+}
+.saved-indicator-error {
+  color: var(--danger);
+  background: var(--danger-light);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.saved-spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-secondary);
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.saved-retry-btn {
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
 .complete-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 2rem;
 }

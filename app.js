@@ -24,6 +24,12 @@ const CONFIG = {
   // Paste your Apps Script Web App URL here (see SETUP.md, step 4).
   // Looks like: https://script.google.com/macros/s/AKfycb.../exec
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbx0_yl9m3wZU8joyC1Q82nHS1Gt9YozaLYHbR16JOzm_K5aRpdPW4qSPQH02UxCz1YR/exec',
+
+  // Web App URL for the *separate* Apps Script deployment that receives
+  // completed submissions and appends them to the Responses sheet — deploy
+  // "Self Assessment answers code.gs" on the Responses Google Sheet and
+  // paste its /exec URL here (see SETUP.md, "Submitting results").
+  SUBMIT_URL: 'https://script.google.com/macros/s/AKfycbyKFFcZ0jacQz80A9gFRxJcMQHT9oWj64-b11_a2Wt1HUiNSffln-zzQ_AuvCkWSKyF/exec',
 };
 
 /* ─────────────────────────────────────────
@@ -110,6 +116,64 @@ async function fetchQuestions(passcode) {
   }
 
   return data.questions;
+}
+
+/**
+ * Submits a completed session to the Apps Script backend so it lands as a
+ * row in the Responses sheet (read by score_assessment_v1.py downstream).
+ * Throws with a user-facing message on any failure.
+ */
+async function submitResults(session) {
+  if (!CONFIG.SUBMIT_URL) {
+    throw new Error('Submission endpoint is not configured yet (SUBMIT_URL is empty in app.js).');
+  }
+
+  const answers = session.order.map(function (qId) {
+    const q = QUESTIONS.find(function (x) { return x.id === qId; });
+    return {
+      questionId:   qId,
+      questionText: q ? q.text  : '',
+      skill:        q ? q.skill : '',
+      type:         q ? q.type  : '',
+      answer:       session.answers[qId],
+    };
+  });
+
+  const payload = {
+    name:        session.name,
+    email:       session.email,
+    startedAt:   session.startedAt,
+    completedAt: session.completedAt,
+    answers:     answers,
+  };
+
+  let res;
+  try {
+    // Content-Type text/plain keeps this a CORS "simple request" so the
+    // browser doesn't issue a preflight OPTIONS call Apps Script can't answer.
+    res = await fetch(CONFIG.SUBMIT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify(payload),
+    });
+  } catch (err) {
+    throw new Error('Could not reach the submission endpoint. Check your connection and try again.');
+  }
+
+  if (!res.ok) {
+    throw new Error('Submission endpoint returned an error (' + res.status + ').');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    throw new Error('Submission endpoint returned an unexpected response.');
+  }
+
+  if (data.error) {
+    throw new Error(data.error);
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -233,6 +297,8 @@ let state = {
   pendingEmail:    '',
   pendingPasscode: getKeyFromUrl(),
   loadError:       null,
+  submitStatus:    null,   // null | 'saving' | 'saved' | 'error'
+  submitErrorMsg:  null,
 };
 
 function setState(updates) {
@@ -328,10 +394,26 @@ function handleNext() {
   saveSession(newSession);
 
   if (complete) {
-    setState({ screen: 'complete', session: newSession, selectedValue: null });
+    setState({ screen: 'complete', session: newSession, selectedValue: null, submitStatus: 'saving', submitErrorMsg: null });
+    submitCompletedSession(newSession);
   } else {
     setState({ session: newSession, selectedValue: null, showValidation: false });
   }
+}
+
+/** Fires the background submission for a just-completed session, updating submitStatus as it resolves. */
+async function submitCompletedSession(session) {
+  try {
+    await submitResults(session);
+    setState({ submitStatus: 'saved', submitErrorMsg: null });
+  } catch (err) {
+    setState({ submitStatus: 'error', submitErrorMsg: err.message });
+  }
+}
+
+function handleRetrySubmit() {
+  setState({ submitStatus: 'saving', submitErrorMsg: null });
+  submitCompletedSession(state.session);
 }
 
 function handleSaveAndExit() {
@@ -469,14 +551,17 @@ function renderQuestion() {
 
         // Header
         '<div class="q-header">' +
+          '<div class="q-brand">' +
+            '<span class="q-brand-mark">' + KENDRA_LOGO_SVG + '</span>' +
+            '<span class="q-brand-name">Kendra Skilling</span>' +
+          '</div>' +
           '<span class="q-user-name">' + esc(s.name) + '</span>' +
-          '<span class="q-position">Question ' + (idx + 1) + ' of ' + total + '</span>' +
         '</div>' +
 
         // Progress bar
         '<div class="progress-section">' +
           '<div class="progress-top">' +
-            '<span class="progress-label">Progress</span>' +
+            '<span class="progress-label">Question ' + (idx + 1) + ' of ' + total + '</span>' +
             '<span class="progress-pct">' + pct + '%</span>' +
           '</div>' +
           '<div class="progress-track">' +
@@ -486,8 +571,6 @@ function renderQuestion() {
 
         // Body
         '<div class="q-body">' +
-          (q.skill ? '<span class="skill-badge">' + esc(q.skill) + '</span>' : '') +
-          '<div class="q-number">Statement ' + (idx + 1) + '</div>' +
           '<div class="q-statement">' + esc(q.text) + '</div>' +
           '<div class="likert-group" role="radiogroup" aria-label="Rate your agreement">' +
             likertHtml +
@@ -508,12 +591,42 @@ function renderQuestion() {
   );
 }
 
+function renderSavedIndicator() {
+  if (state.submitStatus === 'error') {
+    return (
+      '<div class="saved-indicator saved-indicator-error">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
+          '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/>' +
+        '</svg>' +
+        'Couldn\'t save your answers' + (state.submitErrorMsg ? ' (' + esc(state.submitErrorMsg) + ')' : '') + '.' +
+        '<button class="saved-retry-btn" id="retry-submit-btn">Retry</button>' +
+      '</div>'
+    );
+  }
+
+  if (state.submitStatus === 'saved') {
+    return (
+      '<div class="saved-indicator">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="20 6 9 17 4 12"/>' +
+        '</svg>' +
+        'Your answers have been saved.' +
+      '</div>'
+    );
+  }
+
+  // 'saving' (or unset, e.g. mid-transition)
+  return (
+    '<div class="saved-indicator saved-indicator-pending">' +
+      '<span class="saved-spinner"></span>' +
+      'Saving your answers…' +
+    '</div>'
+  );
+}
+
 function renderComplete() {
   const s      = state.session;
   const vals   = Object.values(s.answers);
-  const avg    = vals.length > 0
-    ? (vals.reduce(function (a, b) { return a + b; }, 0) / vals.length).toFixed(1)
-    : '—';
   const skills = new Set(
     Object.keys(s.answers).map(function (id) {
       const q = QUESTIONS.find(function (x) { return x.id === Number(id); });
@@ -525,18 +638,18 @@ function renderComplete() {
     '<div class="screen">' +
       '<div class="card complete-card">' +
         '<div class="complete-icon-wrap">' +
-          '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0D5D56" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6422C9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
             '<polyline points="20 6 9 17 4 12"/>' +
           '</svg>' +
         '</div>' +
         '<h2 class="display-heading complete-heading">Well done, ' + esc(s.name) + '</h2>' +
         '<p class="complete-sub">' +
-          'You\'ve completed the SWE Skills Assessment. ' +
-          'Thank you for reflecting thoughtfully on each statement.' +
+          'You\'ve completed the Skills Snapshot. ' +
+          'Thanks for taking the time to reflect honestly on each statement.' +
         '</p>' +
+        renderSavedIndicator() +
         '<div class="complete-stats">' +
           '<div class="stat-tile"><span class="stat-tile-val">' + vals.length + '</span><span class="stat-tile-lbl">Answered</span></div>' +
-          '<div class="stat-tile"><span class="stat-tile-val">' + avg + '</span><span class="stat-tile-lbl">Avg score</span></div>' +
           '<div class="stat-tile"><span class="stat-tile-val">' + skills.size + '</span><span class="stat-tile-lbl">Areas covered</span></div>' +
         '</div>' +
         '<button class="btn btn-secondary btn-full" id="new-session-btn">Start a new session</button>' +
@@ -638,6 +751,8 @@ function bindEvents() {
 
     case 'complete': {
       document.getElementById('new-session-btn').addEventListener('click', handleNewSession);
+      const retryBtn = document.getElementById('retry-submit-btn');
+      if (retryBtn) retryBtn.addEventListener('click', handleRetrySubmit);
       break;
     }
   }
