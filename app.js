@@ -532,6 +532,7 @@ function renderQuestion() {
            'aria-checked="' + (state.selectedValue === opt.value ? 'true' : 'false') + '" tabindex="0">' +
         '<div class="radio-ring"><div class="radio-dot"></div></div>' +
         '<span class="likert-label">' + esc(opt.label) + '</span>' +
+        '<span class="likert-key">' + opt.value + '</span>' +
       '</div>'
     );
   }).join('');
@@ -757,6 +758,23 @@ function bindEvents() {
     }
   }
 }
+
+/* ─────────────────────────────────────────
+   GLOBAL KEYBOARD SHORTCUTS
+   ───────────────────────────────────────── */
+
+/** On the question screen, digit keys 1-5 pick the matching Likert option. */
+document.addEventListener('keydown', function (e) {
+  if (state.screen !== 'question') return;
+
+  const digit = LIKERT_OPTIONS.some(function (opt) { return String(opt.value) === e.key; })
+    ? parseInt(e.key, 10)
+    : null;
+  if (digit === null) return;
+
+  e.preventDefault();
+  handleSelectOption(digit);
+});
 
 /* ─────────────────────────────────────────
    BOOT
