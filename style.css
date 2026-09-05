@@ -5,22 +5,27 @@
    ───────────────────────────────────────── */
 
 :root {
-  --bg:           #F7F5F0;
+  --bg:           #F7F5FC;
   --surface:      #FFFFFF;
-  --border:       #E2DDD5;
-  --border-focus: #0D5D56;
+  --border:       #E2DAF3;
+  --border-focus: #6422C9;
 
-  --text-primary:   #1A1714;
-  --text-secondary: #7A7169;
-  --text-muted:     #A89F97;
+  --text-primary:   #1C1530;
+  --text-secondary: #6B6385;
+  --text-muted:     #A99FC4;
 
-  --accent:       #0D5D56;
-  --accent-hover: #0A4A44;
-  --accent-light: #EEF8F7;
-  --accent-mid:   #B8D5D3;
+  --accent:       #6422C9;
+  --accent-hover: #4E1AA0;
+  --accent-light: #F3EFFF;
+  --accent-mid:   #C9BCEC;
 
-  --danger:       #C2410C;
-  --danger-light: #FEF3EE;
+  --kendra-azure: #2E7DF6;
+  --kendra-teal:  #10B5A4;
+  --kendra-amber: #F7A93B;
+  --kendra-rose:  #F2547D;
+
+  --danger:       #F2547D;
+  --danger-light: #FDECF1;
 
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
   --shadow-md: 0 2px 8px rgba(0,0,0,0.07), 0 6px 20px rgba(0,0,0,0.05);
@@ -158,7 +163,8 @@ body {
   margin-bottom: 7px;
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="email"] {
   width: 100%;
   padding: 12px 16px;
   border: 1.5px solid var(--border);
@@ -171,8 +177,10 @@ input[type="text"] {
   transition: border-color var(--transition), box-shadow var(--transition);
   -webkit-appearance: none;
 }
-input[type="text"]::placeholder { color: var(--text-muted); }
-input[type="text"]:focus {
+input[type="text"]::placeholder,
+input[type="email"]::placeholder { color: var(--text-muted); }
+input[type="text"]:focus,
+input[type="email"]:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--accent-light);
 }
@@ -198,16 +206,11 @@ input[type="text"]:focus {
 .brand-mark {
   width: 34px;
   height: 34px;
-  background: var(--accent);
-  border-radius: 8px;
   display: grid;
   place-items: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.03em;
   flex-shrink: 0;
 }
+.brand-mark svg { display: block; }
 .brand-name {
   font-size: 13px;
   font-weight: 500;
@@ -225,36 +228,6 @@ input[type="text"]:focus {
   color: var(--text-secondary);
   line-height: 1.65;
   margin-bottom: 2rem;
-}
-
-.meta-row {
-  display: flex;
-  gap: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-.meta-cell {
-  flex: 1;
-  padding: 1rem;
-  text-align: center;
-  border-right: 1px solid var(--border);
-}
-.meta-cell:last-child { border-right: none; }
-.meta-val {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: block;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.meta-lbl {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 /* ═══════════════════════════════════════
@@ -648,6 +621,9 @@ input[type="password"]:focus {
 }
 
 .login-card #name-input {
+  margin-bottom: 14px;
+}
+.login-card #email-input {
   margin-bottom: 14px;
 }
 .login-card #passcode-input {

@@ -33,6 +33,25 @@ const CONFIG = {
 let QUESTIONS = [];
 let TOTAL = 0;
 
+/** Kendra "Focal Pentagon" brand mark, inline so no external asset is needed. */
+const KENDRA_LOGO_SVG =
+  '<svg width="34" height="34" viewBox="0 0 200 200" aria-hidden="true">' +
+    '<path d="M100 100 L51.8 33.7 L148.2 33.7 Z" fill="#6422C9"/>' +
+    '<path d="M100 100 L148.2 33.7 L178 125.3 Z" fill="#2E7DF6"/>' +
+    '<path d="M100 100 L178 125.3 L100 182 Z" fill="#10B5A4"/>' +
+    '<path d="M100 100 L100 182 L22 125.3 Z" fill="#F7A93B"/>' +
+    '<path d="M100 100 L22 125.3 L51.8 33.7 Z" fill="#F2547D"/>' +
+    '<g stroke="#fff" stroke-width="4.5" stroke-linecap="round">' +
+      '<line x1="100" y1="100" x2="51.8" y2="33.7"/>' +
+      '<line x1="100" y1="100" x2="148.2" y2="33.7"/>' +
+      '<line x1="100" y1="100" x2="178" y2="125.3"/>' +
+      '<line x1="100" y1="100" x2="100" y2="182"/>' +
+      '<line x1="100" y1="100" x2="22" y2="125.3"/>' +
+    '</g>' +
+    '<circle cx="100" cy="100" r="12" fill="#fff"/>' +
+    '<circle cx="100" cy="100" r="6" fill="#6422C9"/>' +
+  '</svg>';
+
 const LIKERT_OPTIONS = [
   { value: 1, label: 'Strongly disagree' },
   { value: 2, label: 'Disagree'          },
@@ -182,11 +201,12 @@ function loadSession(name) {
  * The question order is seeded by name so it's consistent
  * across devices for the same user but different from others.
  */
-function createSession(name) {
+function createSession(name, email) {
   const seed  = nameToSeed(name);
   const order = seededShuffle(QUESTIONS.map(function (q) { return q.id; }), seed);
   return {
     name:        name.trim(),
+    email:       (email || '').trim(),
     order:       order,       // array of question IDs in shuffled order
     answers:     {},          // { questionId: likertValue }
     currentIdx:  0,           // index into `order`
@@ -210,6 +230,7 @@ let state = {
   selectedValue:   null,   // currently highlighted Likert option
   showValidation:  false,  // show "please select" hint
   pendingName:     '',
+  pendingEmail:    '',
   pendingPasscode: getKeyFromUrl(),
   loadError:       null,
 };
@@ -239,12 +260,13 @@ function showToast(message) {
    ACTION HANDLERS
    ───────────────────────────────────────── */
 
-async function handleLoginSubmit(rawName, rawPasscode) {
+async function handleLoginSubmit(rawName, rawEmail, rawPasscode) {
   const name     = rawName.trim();
+  const email    = (rawEmail || '').trim();
   const passcode = (rawPasscode || '').trim();
-  if (!name || !passcode) return;
+  if (!name || !email || !passcode) return;
 
-  setState({ screen: 'loading', pendingName: name, pendingPasscode: passcode, loadError: null });
+  setState({ screen: 'loading', pendingName: name, pendingEmail: email, pendingPasscode: passcode, loadError: null });
 
   if (QUESTIONS.length === 0) {
     try {
@@ -261,10 +283,10 @@ async function handleLoginSubmit(rawName, rawPasscode) {
 
   if (existing && !existing.complete) {
     // Resume prompt
-    setState({ screen: 'resume', session: existing, loadError: null });
+    setState({ screen: 'resume', session: Object.assign({}, existing, { email: email }), loadError: null });
   } else {
     // Fresh start (or previous attempt was complete)
-    const session = createSession(name);
+    const session = createSession(name, email);
     saveSession(session);
     setState({ screen: 'question', session: session, selectedValue: null, showValidation: false, loadError: null });
   }
@@ -275,7 +297,7 @@ function handleResume() {
 }
 
 function handleRestart() {
-  const session = createSession(state.session.name);
+  const session = createSession(state.session.name, state.session.email);
   saveSession(session);
   setState({ screen: 'question', session: session, selectedValue: null, showValidation: false });
 }
@@ -344,23 +366,20 @@ function renderLogin() {
     '<div class="screen">' +
       '<div class="card login-card">' +
         '<div class="app-brand">' +
-          '<div class="brand-mark">K</div>' +
-          '<span class="brand-name">Skills Assessment</span>' +
+          '<div class="brand-mark">' + KENDRA_LOGO_SVG + '</div>' +
+          '<span class="brand-name">Kendra Skilling</span>' +
         '</div>' +
-        '<h1 class="display-heading login-heading">SWE Competency Questionnaire</h1>' +
+        '<h1 class="display-heading login-heading">Skills Snapshot</h1>' +
         '<p class="login-desc">' +
-          'A self-reflection tool covering 11 engineering skill areas. ' +
-          'Answer each statement honestly — there are no right or wrong responses. ' +
-          'Your progress saves automatically so you can always return.' +
+          'A quick self-check across your technical skills. ' +
+          'Be honest with your answers, there\'s no right or wrong here. ' +
+          'Your progress saves automatically, so feel free to come back anytime within this browser.' +
         '</p>' +
-        '<div class="meta-row">' +
-          '<div class="meta-cell"><span class="meta-val">101</span><span class="meta-lbl">Statements</span></div>' +
-          '<div class="meta-cell"><span class="meta-val">11</span><span class="meta-lbl">Skill areas</span></div>' +
-          '<div class="meta-cell"><span class="meta-val">~15</span><span class="meta-lbl">Minutes</span></div>' +
-        '</div>' +
         '<div class="divider"></div>' +
         '<label class="field-label" for="name-input">Your name</label>' +
         '<input type="text" id="name-input" placeholder="e.g. Alex Johnson" autocomplete="name" value="' + esc(state.pendingName) + '" />' +
+        '<label class="field-label" for="email-input">Your email</label>' +
+        '<input type="email" id="email-input" placeholder="e.g. alex@company.com" autocomplete="email" value="' + esc(state.pendingEmail) + '" />' +
         (passcodeFromUrl
           ? '<input type="hidden" id="passcode-input" value="' + esc(state.pendingPasscode) + '" />'
           : (
@@ -382,8 +401,8 @@ function renderLoading() {
     '<div class="screen">' +
       '<div class="card login-card">' +
         '<div class="app-brand">' +
-          '<div class="brand-mark">K</div>' +
-          '<span class="brand-name">Skills Assessment</span>' +
+          '<div class="brand-mark">' + KENDRA_LOGO_SVG + '</div>' +
+          '<span class="brand-name">Kendra Skilling</span>' +
         '</div>' +
         '<p class="login-desc">Loading your assessment…</p>' +
       '</div>' +
@@ -551,34 +570,35 @@ function bindEvents() {
   switch (state.screen) {
 
     case 'login': {
-      const input     = document.getElementById('name-input');
-      const passInput = document.getElementById('passcode-input');
-      const btn       = document.getElementById('begin-btn');
+      const input      = document.getElementById('name-input');
+      const emailInput = document.getElementById('email-input');
+      const passInput  = document.getElementById('passcode-input');
+      const btn        = document.getElementById('begin-btn');
 
       function refreshBtn() {
-        const hasName = input.value.trim().length > 0;
-        const hasPass = passInput.value.trim().length > 0;
-        btn.disabled = !(hasName && hasPass);
+        const hasName  = input.value.trim().length > 0;
+        const hasEmail = /\S+@\S+\.\S+/.test(emailInput.value.trim());
+        const hasPass  = passInput.value.trim().length > 0;
+        btn.disabled = !(hasName && hasEmail && hasPass);
+      }
+
+      function trySubmit(e) {
+        if (e.key === 'Enter' && !btn.disabled) {
+          handleLoginSubmit(input.value, emailInput.value, passInput.value);
+        }
       }
 
       input.addEventListener('input', refreshBtn);
+      input.addEventListener('keydown', trySubmit);
+      emailInput.addEventListener('input', refreshBtn);
+      emailInput.addEventListener('keydown', trySubmit);
       if (passInput.type !== 'hidden') {
         passInput.addEventListener('input', refreshBtn);
-        passInput.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' && !btn.disabled) {
-            handleLoginSubmit(input.value, passInput.value);
-          }
-        });
+        passInput.addEventListener('keydown', trySubmit);
       }
 
-      input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !btn.disabled) {
-          handleLoginSubmit(input.value, passInput.value);
-        }
-      });
-
       btn.addEventListener('click', function () {
-        handleLoginSubmit(input.value, passInput.value);
+        handleLoginSubmit(input.value, emailInput.value, passInput.value);
       });
 
       refreshBtn();
