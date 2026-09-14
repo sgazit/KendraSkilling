@@ -20,7 +20,7 @@ const CONFIG = {
   // Apps Script Web App URL that serves the scenario content (Code.gs).
   // Paste your deployment URL here (see SETUP.md, step 3).
   // Looks like: https://script.google.com/macros/s/AKfycb.../exec
-  APPS_SCRIPT_URL: '',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyyeMrmF_15UZhwGKQo3r2ZqoZ-h-4xTromPZuR0EAi-35MfEv3PTysyIyQNGVBpkLzDw/exec',
 
   // Apps Script Web App URL that receives completed submissions and
   // appends them as rows to the "Engineer Assessment Responses" sheet's
@@ -132,7 +132,7 @@ function loadState() {
         return saved;
       }
     }
-  } catch(e) {}
+  } catch (e) { }
   return null;
 }
 function clearState() {
@@ -259,7 +259,7 @@ function renderScenario(idx) {
     if (/^https?:\/\//i.test(rawUrl)) {
       let fileId = "";
       const matchView = rawUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      const matchUc   = rawUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      const matchUc = rawUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
       if (matchView) fileId = matchView[1];
       else if (matchUc) fileId = matchUc[1];
       else fileId = rawUrl;
