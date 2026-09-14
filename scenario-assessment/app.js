@@ -170,6 +170,14 @@ function initWelcome() {
   }
 
   document.getElementById("btn-begin").addEventListener("click", handleBegin);
+
+  // Enter key in any welcome-screen field starts the assessment, same as clicking the button.
+  function trySubmitOnEnter(e) {
+    if (e.key === "Enter" && !document.getElementById("btn-begin").disabled) handleBegin();
+  }
+  document.getElementById("input-name").addEventListener("keydown", trySubmitOnEnter);
+  document.getElementById("input-email").addEventListener("keydown", trySubmitOnEnter);
+  passcodeInput.addEventListener("keydown", trySubmitOnEnter);
 }
 
 async function handleBegin() {
