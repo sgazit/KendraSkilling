@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Serve KendraSkilling (http://localhost:5500)",
+      "type": "shell",
+      "command": "python3 -m http.server 5500",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "detail": "No-dependency static server. Alternative to the Live Server extension."
+    }
+  ]
+}

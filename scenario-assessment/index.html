@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineer Assessment</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Kendra Focal Pentagon mark, shared defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="kendra-mark" viewBox="0 0 200 200">
+      <path d="M100 100 L51.8 33.7 L148.2 33.7 Z" fill="#6422C9"/>
+      <path d="M100 100 L148.2 33.7 L178 125.3 Z" fill="#2E7DF6"/>
+      <path d="M100 100 L178 125.3 L100 182 Z" fill="#10B5A4"/>
+      <path d="M100 100 L100 182 L22 125.3 Z" fill="#F7A93B"/>
+      <path d="M100 100 L22 125.3 L51.8 33.7 Z" fill="#F2547D"/>
+      <g stroke="#fff" stroke-width="4.5" stroke-linecap="round">
+        <line x1="100" y1="100" x2="51.8" y2="33.7"/>
+        <line x1="100" y1="100" x2="148.2" y2="33.7"/>
+        <line x1="100" y1="100" x2="178" y2="125.3"/>
+        <line x1="100" y1="100" x2="100" y2="182"/>
+        <line x1="100" y1="100" x2="22" y2="125.3"/>
+      </g>
+      <circle cx="100" cy="100" r="12" fill="#fff"/>
+      <circle cx="100" cy="100" r="6" fill="#6422C9"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app-shell">
+
+  <div class="app-header">
+    <svg width="30" height="30" viewBox="0 0 200 200"><use href="#kendra-mark"/></svg>
+    <div class="app-header-text">
+      <div class="app-header-title">Kendra</div>
+      <div class="app-header-sub">Engineer Assessment</div>
+    </div>
+  </div>
+
+  <!-- ── WELCOME ── -->
+  <div id="screen-welcome" class="screen active">
+    <div class="card">
+      <div class="welcome-header">
+        <div class="icon"><svg class="kendra-mark" width="56" height="56" viewBox="0 0 200 200"><use href="#kendra-mark"/></svg></div>
+        <h1>Engineer Assessment</h1>
+        <p>This assessment presents five real-world scenarios. Read each carefully and choose the response that best reflects how you would approach the situation. Once you choose an answer, you won't be able to go back and change it. Your progress saves automatically, so feel free to come back anytime within this browser.</p>
+        <div class="time-badge">⏱ Estimated time: 30–45 minutes</div>
+      </div>
+
+      <div class="resume-notice" id="resume-notice">
+        <strong>Welcome back!</strong> You have a saved session, your progress has been restored. You can continue where you left off.
+      </div>
+
+      <div class="load-error" id="load-error"></div>
+
+      <div class="field">
+        <label for="input-name">Full Name</label>
+        <input type="text" id="input-name" placeholder="Your full name" autocomplete="name">
+        <div class="field-error" id="error-name">Please enter your name.</div>
+      </div>
+      <div class="field">
+        <label for="input-email">Email Address</label>
+        <input type="email" id="input-email" placeholder="you@example.com" autocomplete="email">
+        <div class="field-error" id="error-email">Please enter a valid email address.</div>
+      </div>
+      <div class="field" id="field-passcode">
+        <label for="input-passcode">Passcode</label>
+        <input type="password" id="input-passcode" placeholder="Provided by your Kendra Practitioner" autocomplete="off">
+        <div class="field-error" id="error-passcode">Please enter the passcode.</div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-begin">
+        <span id="begin-label">Begin Assessment →</span>
+        <span class="spinner" id="begin-spinner"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SCENARIO (rendered dynamically) ── -->
+  <div id="screen-scenario" class="screen">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- ── REVIEW ── -->
+  <div id="screen-review" class="screen">
+    <div class="card">
+      <div class="review-header">
+        <h2 id="review-greeting">Almost done!</h2>
+        <p>Please review your answers below before submitting.</p>
+      </div>
+      <div id="review-scenarios-list"></div>
+      <div class="review-info" id="review-identity"></div>
+      <div class="review-warning" id="review-skipped-warning"></div>
+      <div style="margin-top:28px;">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Once submitted, your answers cannot be changed.</p>
+        <button class="btn btn-primary" id="btn-submit">
+          <span id="submit-label">Submit Assessment</span>
+          <span class="spinner" id="submit-spinner"></span>
+        </button>
+        <div class="submit-error" id="submit-error">
+          Something went wrong submitting your responses. Please try again, or contact the assessment administrator.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── THANK YOU ── -->
+  <div id="screen-thankyou" class="screen">
+    <div class="card">
+      <div class="thankyou-center">
+        <div class="confetti-field" id="confetti-field"></div>
+        <div class="thankyou-icon"><svg width="64" height="64" viewBox="0 0 200 200"><use href="#kendra-mark"/></svg></div>
+        <h2 id="thankyou-name">Thank you!</h2>
+        <p>Your responses have been submitted.<br>You'll hear from us soon.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<script src="app.js"></script>
+</body>
+</html>

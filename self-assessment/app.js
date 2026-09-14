@@ -466,7 +466,7 @@ function renderLogin() {
           ? '<input type="hidden" id="passcode-input" value="' + esc(state.pendingPasscode) + '" />'
           : (
               '<label class="field-label" for="passcode-input">Assessment passcode</label>' +
-              '<input type="password" id="passcode-input" placeholder="Provided by your administrator" autocomplete="off" value="' + esc(state.pendingPasscode) + '" />'
+              '<input type="password" id="passcode-input" placeholder="Provided by your Kendra Practitioner" autocomplete="off" value="' + esc(state.pendingPasscode) + '" />'
             )
         ) +
         errorHtml +

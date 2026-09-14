@@ -1,24 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kendra Skilling</title>
-  <meta name="description" content="A self-reflection questionnaire covering 11 key software engineering skill areas." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kendra Skilling</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
-    rel="stylesheet"
-  />
-  <link rel="stylesheet" href="style.css" />
+  :root {
+    --k-purple: #6422C9;
+    --k-blue:   #2E7DF6;
+    --k-teal:   #10B5A4;
+    --k-gold:   #F7A93B;
+    --k-coral:  #F2547D;
+
+    --bg: #E7E4EC;
+    --surface: #FFFFFF;
+    --border: #E4DEF3;
+    --text-primary: #1C1530;
+    --text-secondary: #6B6385;
+    --text-muted: #A99FC4;
+    --accent: #6422C9;
+    --accent-hover: #4E1AA0;
+    --accent-light: #F1EAFB;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow-card: 0 2px 10px rgba(38,18,80,.07);
+    --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --transition: 180ms cubic-bezier(.4,0,.2,1);
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+  body {
+    font-family: var(--font);
+    background:
+      radial-gradient(720px 420px at 100% -8%, rgba(46,125,246,.10), transparent 60%),
+      radial-gradient(640px 380px at -8% 108%, rgba(242,84,125,.10), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @keyframes markPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.05) rotate(3deg); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  }
+
+  .app-shell {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+
+  .hub-header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeInUp 420ms cubic-bezier(.4,0,.2,1) both;
+  }
+  .hub-header .icon {
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: center;
+  }
+  .hub-header .icon svg {
+    animation: markPulse 3.6s ease-in-out infinite;
+  }
+  .hub-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -.4px;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+  .hub-header p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .assessment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 640px) {
+    .assessment-grid { grid-template-columns: 1fr; }
+  }
+
+  .assessment-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    animation: fadeInUp 480ms cubic-bezier(.4,0,.2,1) both;
+  }
+  .assessment-card:nth-child(2) { animation-delay: 60ms; }
+  .assessment-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(38,18,80,.14);
+    border-color: var(--card-color, var(--accent));
+  }
+
+  .card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--card-color, var(--k-purple)) 0%, color-mix(in srgb, var(--card-color, var(--k-purple)) 55%, #fff) 100%);
+    color: #fff;
+  }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -.2px;
+  }
+  .card-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+    flex: 1;
+  }
+
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    background: linear-gradient(135deg, var(--card-color, var(--k-purple)), color-mix(in srgb, var(--card-color, var(--k-purple)) 70%, #fff));
+    color: #fff;
+    transition: all var(--transition);
+  }
+  .assessment-card:hover .card-cta {
+    box-shadow: 0 4px 14px rgba(38,18,80,.22);
+    transform: translateY(-1px);
+  }
+
+  .hub-footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+</style>
 </head>
 <body>
-  <div id="app">
-    <div id="screen-container"></div>
+
+<div class="app-shell">
+
+  <div class="hub-header">
+    <div class="icon">
+      <svg class="kendra-mark" width="56" height="56" viewBox="0 0 200 200" aria-hidden="true">
+        <path d="M100 100 L51.8 33.7 L148.2 33.7 Z" fill="#6422C9"/>
+        <path d="M100 100 L148.2 33.7 L178 125.3 Z" fill="#2E7DF6"/>
+        <path d="M100 100 L178 125.3 L100 182 Z" fill="#10B5A4"/>
+        <path d="M100 100 L100 182 L22 125.3 Z" fill="#F7A93B"/>
+        <path d="M100 100 L22 125.3 L51.8 33.7 Z" fill="#F2547D"/>
+        <g stroke="#fff" stroke-width="4.5" stroke-linecap="round">
+          <line x1="100" y1="100" x2="51.8" y2="33.7"/>
+          <line x1="100" y1="100" x2="148.2" y2="33.7"/>
+          <line x1="100" y1="100" x2="178" y2="125.3"/>
+          <line x1="100" y1="100" x2="100" y2="182"/>
+          <line x1="100" y1="100" x2="22" y2="125.3"/>
+        </g>
+        <circle cx="100" cy="100" r="12" fill="#fff"/>
+        <circle cx="100" cy="100" r="6" fill="#6422C9"/>
+      </svg>
+    </div>
+    <h1>Kendra Skilling</h1>
+    <p>Choose an assessment below to get started.</p>
   </div>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+
+  <div class="assessment-grid">
+    <a class="assessment-card" style="--card-color:#10B5A4;" href="self-assessment/">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Self Assessment</div>
+      <div class="card-desc">A quick self-check across your technical skills. Rate yourself honestly across a set of statements, there's no right or wrong answer.</div>
+      <span class="card-cta">Start Self Assessment →</span>
+    </a>
+
+    <a class="assessment-card" style="--card-color:#6422C9;" href="scenario-assessment/">
+      <div class="card-icon">🧭</div>
+      <div class="card-title">Engineer Assessment</div>
+      <div class="card-desc">Five real-world scenarios, each with a short series of questions. Read carefully and choose the response that best reflects how you'd approach the situation.</div>
+      <span class="card-cta">Start Engineer Assessment →</span>
+    </a>
+  </div>
+
+  <div class="hub-footer">Kendra</div>
+
+</div>
+
 </body>
 </html>

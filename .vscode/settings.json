@@ -1,0 +1,17 @@
+{
+  // Vanilla JS/HTML/CSS, no build step. Serve over http:// (not file://) so the
+  // runtime fetch() to the Apps Script endpoint works.
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.root": "/",
+  "liveServer.settings.CustomBrowser": "chrome",
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+  "files.exclude": {
+    "**/.DS_Store": true
+  }
+}
