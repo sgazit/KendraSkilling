@@ -666,15 +666,17 @@ body {
 }
 .context-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
 }
 .context-table th,
 .context-table td {
   text-align: left;
-  padding: 9px 12px;
+  padding: 9px 10px;
   border-bottom: 1px solid var(--border);
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 .context-table tr:last-child th,
 .context-table tr:last-child td {
