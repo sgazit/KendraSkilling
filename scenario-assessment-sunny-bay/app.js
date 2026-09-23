@@ -25,7 +25,7 @@
 const CONFIG = {
   // Apps Script Web App URL that serves the Sunny Bay Park stage content
   // (this variant's Code.gs). Paste your deployment URL here.
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzHD0Licy8Qo7zVA0mfcbQwIxCnFQVqBba7dL1j1PYGJtzIGyWdllIknBdT2dXE/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxhSOXHKXAwBo3Cb_rFeKTuMn-aNsy_1BZ2OmxLD6hQqe19_Byj9-52_N-afdHt7Ost/exec',
 
   // Apps Script Web App URL that receives completed submissions and
   // appends them as rows to the "Sunny Bay Assessment Responses" sheet's
