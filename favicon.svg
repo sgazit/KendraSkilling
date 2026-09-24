@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <path d="M100 100 L51.8 33.7 L148.2 33.7 Z" fill="#6422C9"/>
+  <path d="M100 100 L148.2 33.7 L178 125.3 Z" fill="#2E7DF6"/>
+  <path d="M100 100 L178 125.3 L100 182 Z" fill="#10B5A4"/>
+  <path d="M100 100 L100 182 L22 125.3 Z" fill="#F7A93B"/>
+  <path d="M100 100 L22 125.3 L51.8 33.7 Z" fill="#F2547D"/>
+  <g stroke="#fff" stroke-width="4.5" stroke-linecap="round">
+    <line x1="100" y1="100" x2="51.8" y2="33.7"/>
+    <line x1="100" y1="100" x2="148.2" y2="33.7"/>
+    <line x1="100" y1="100" x2="178" y2="125.3"/>
+    <line x1="100" y1="100" x2="100" y2="182"/>
+    <line x1="100" y1="100" x2="22" y2="125.3"/>
+  </g>
+  <circle cx="100" cy="100" r="12" fill="#fff"/>
+  <circle cx="100" cy="100" r="6" fill="#6422C9"/>
+</svg>
