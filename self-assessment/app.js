@@ -145,6 +145,7 @@ async function submitResults(session) {
     startedAt:   session.startedAt,
     completedAt: session.completedAt,
     answers:     answers,
+    ndaApprovedAt: session.ndaApprovedAt || '',  // last key: existing fields unchanged
   };
 
   let res;
@@ -277,6 +278,7 @@ function createSession(name, email) {
     complete:    false,
     startedAt:   new Date().toISOString(),
     completedAt: null,
+    ndaApprovedAt: new Date().toISOString(),  // the NDA box is ticked before a session starts
     version:     1,           // schema version for future migrations
   };
 }
@@ -349,7 +351,7 @@ async function handleLoginSubmit(rawName, rawEmail, rawPasscode) {
 
   if (existing && !existing.complete) {
     // Resume prompt
-    setState({ screen: 'resume', session: Object.assign({}, existing, { email: email }), loadError: null });
+    setState({ screen: 'resume', session: Object.assign({}, existing, { email: email, ndaApprovedAt: existing.ndaApprovedAt || new Date().toISOString() }), loadError: null });
   } else {
     // Fresh start (or previous attempt was complete)
     const session = createSession(name, email);
@@ -470,6 +472,10 @@ function renderLogin() {
             )
         ) +
         errorHtml +
+        '<label class="nda-label">' +
+          '<input type="checkbox" id="nda-input" />' +
+          '<span>I have read and approve the <a href="../nda/" target="_blank" rel="noopener">Kendra NDA</a>.</span>' +
+        '</label>' +
         '<button class="btn btn-primary btn-full" id="begin-btn" disabled>' +
           'Begin assessment' +
         '</button>' +
@@ -687,13 +693,14 @@ function bindEvents() {
       const input      = document.getElementById('name-input');
       const emailInput = document.getElementById('email-input');
       const passInput  = document.getElementById('passcode-input');
+      const ndaInput   = document.getElementById('nda-input');
       const btn        = document.getElementById('begin-btn');
 
       function refreshBtn() {
         const hasName  = input.value.trim().length > 0;
         const hasEmail = /\S+@\S+\.\S+/.test(emailInput.value.trim());
         const hasPass  = passInput.value.trim().length > 0;
-        btn.disabled = !(hasName && hasEmail && hasPass);
+        btn.disabled = !(hasName && hasEmail && hasPass && ndaInput.checked);
       }
 
       function trySubmit(e) {
@@ -705,6 +712,7 @@ function bindEvents() {
       input.addEventListener('input', refreshBtn);
       input.addEventListener('keydown', trySubmit);
       emailInput.addEventListener('input', refreshBtn);
+      ndaInput.addEventListener('change', refreshBtn);
       emailInput.addEventListener('keydown', trySubmit);
       if (passInput.type !== 'hidden') {
         passInput.addEventListener('input', refreshBtn);

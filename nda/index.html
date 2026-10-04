@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kendra Participant NDA</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --k-purple: #6422C9;
+    --k-blue:   #2E7DF6;
+    --k-teal:   #10B5A4;
+    --k-gold:   #F7A93B;
+    --k-coral:  #F2547D;
+
+    --bg: #E7E4EC;
+    --surface: #FFFFFF;
+    --border: #E4DEF3;
+    --text-primary: #1C1530;
+    --text-secondary: #6B6385;
+    --accent: #6422C9;
+    --accent-hover: #4E1AA0;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow-card: 0 2px 10px rgba(38,18,80,.07);
+    --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background:
+      radial-gradient(720px 420px at 100% -8%, rgba(46,125,246,.10), transparent 60%),
+      radial-gradient(640px 380px at -8% 108%, rgba(242,84,125,.10), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 16px 48px;
+  }
+
+  .page { max-width: 760px; margin: 0 auto; }
+
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: linear-gradient(135deg, var(--k-purple), #7B3FE0);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(100,34,201,.28);
+    transition: background 180ms, box-shadow 180ms;
+  }
+  .btn:hover {
+    background: linear-gradient(135deg, var(--accent-hover), var(--k-purple));
+    box-shadow: 0 6px 18px rgba(100,34,201,.36);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 40px 44px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .brand-name { font-size: 18px; font-weight: 800; letter-spacing: .2px; }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+    border-bottom: 3px solid transparent;
+    border-image: linear-gradient(90deg, var(--k-purple), var(--k-blue), var(--k-teal), var(--k-gold), var(--k-coral)) 1;
+  }
+
+  h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--k-purple);
+    margin: 28px 0 6px;
+  }
+
+  p { color: var(--text-secondary); margin-bottom: 12px; }
+  p strong, .intro { color: var(--text-primary); }
+
+  @media (max-width: 560px) {
+    body { padding: 16px 12px 32px; }
+    .card { padding: 28px 22px; }
+    h1 { font-size: 20px; }
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; font-size: 11.5pt; }
+    .toolbar { display: none; }
+    .card { border: none; box-shadow: none; padding: 0; }
+    h2 { break-after: avoid; }
+    p { break-inside: avoid; color: #000; }
+    .brand-name, h1, h2 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @page { margin: 20mm; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="kendra-mark" viewBox="0 0 200 200">
+      <path d="M100 100 L51.8 33.7 L148.2 33.7 Z" fill="#6422C9"/>
+      <path d="M100 100 L148.2 33.7 L178 125.3 Z" fill="#2E7DF6"/>
+      <path d="M100 100 L178 125.3 L100 182 Z" fill="#10B5A4"/>
+      <path d="M100 100 L100 182 L22 125.3 Z" fill="#F7A93B"/>
+      <path d="M100 100 L22 125.3 L51.8 33.7 Z" fill="#F2547D"/>
+      <g stroke="#fff" stroke-width="4.5" stroke-linecap="round">
+        <line x1="100" y1="100" x2="51.8" y2="33.7"/>
+        <line x1="100" y1="100" x2="148.2" y2="33.7"/>
+        <line x1="100" y1="100" x2="178" y2="125.3"/>
+        <line x1="100" y1="100" x2="100" y2="182"/>
+        <line x1="100" y1="100" x2="22" y2="125.3"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="page">
+  <div class="toolbar">
+    <button class="btn" type="button" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <main class="card">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 200 200"><use href="#kendra-mark"/></svg>
+      <span class="brand-name">Kendra Skilling</span>
+    </div>
+
+    <h1>Kendra Participant Non-Disclosure Agreement (NDA)</h1>
+
+    <p class="intro">This Non-Disclosure Agreement (the "Agreement") is between Kendra Skilling ("Kendra") and you, the person taking the Kendra assessment ("you").</p>
+
+    <h2>1. Purpose</h2>
+    <p>You are taking part in the Kendra pilot, which may include taking the assessment, receiving results and reports, and sharing feedback on Kendra's products, services, and ideas (the "Purpose"). In connection with the Purpose, Kendra will share non-public information with you, and you may share information with Kendra.</p>
+
+    <h2>2. What is Confidential Information</h2>
+    <p>"Confidential Information" means all non-public information about Kendra that you see or receive, in any form, including: assessment questions, scenarios and answer options; scoring methods and the skills framework; reports, report formats and results templates; product designs, features and prototypes; research, data, algorithms and software; business plans, strategies, pricing and customer information; and any other materials related to Kendra's concept or operations.</p>
+    <p>Confidential Information does not include information that: (a) was publicly known at the time of disclosure; (b) becomes publicly known through no fault of yours; (c) you already had without breaking any obligation; (d) you develop independently without using Confidential Information; or (e) you lawfully receive from a third party who is free to share it.</p>
+
+    <h2>3. Your commitments</h2>
+    <p>You agree to: (a) use Confidential Information only for the Purpose; (b) not share, copy, screenshot, record, post or distribute it to anyone without Kendra's prior written consent; (c) take reasonable care to protect it from unauthorized access or disclosure; (d) not reverse-engineer, deconstruct or try to replicate any product, concept or idea contained in it; and (e) delete or return it when Kendra asks.</p>
+
+    <h2>4. No license or ownership</h2>
+    <p>Nothing in this Agreement gives you any rights, ownership or license to Kendra's Confidential Information or intellectual property. All rights remain with Kendra. Kendra may freely use any feedback or suggestions you give, without owing you anything.</p>
+
+    <h2>5. No obligation to proceed</h2>
+    <p>This Agreement does not obligate either side to continue any business relationship or transaction.</p>
+
+    <h2>6. Governing law</h2>
+    <p>This Agreement is governed by the laws of the State of Israel.</p>
+
+    <h2>7. Entire agreement</h2>
+    <p>This Agreement is the entire understanding between you and Kendra regarding confidentiality and replaces any earlier agreements or discussions on this subject.</p>
+
+    <h2>8. Approval</h2>
+    <p>By ticking the box "I have read and approve the Kendra NDA" in the app, you confirm that you have read this Agreement, agree to its terms, and that this approval has the same effect as your signature. Kendra records the date and time of your approval.</p>
+  </main>
+</div>
+
+</body>
+</html>

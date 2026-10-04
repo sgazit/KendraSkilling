@@ -648,3 +648,24 @@ body {
 .modal p { font-size: 15px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 20px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .modal-actions .btn { width: auto; margin-top: 0; padding: 10px 22px; font-size: 14px; }
+
+/* ── NDA checkbox ── */
+.nda-check { margin: 4px 0 8px; }
+.nda-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.nda-label input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.nda-label a { color: var(--accent); font-weight: 600; }
+.nda-label a:hover { color: var(--accent-hover); }

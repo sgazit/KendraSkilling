@@ -115,6 +115,7 @@ let state = {
   currentQuestion: 0,  // 0-indexed, within currentStage
   answers: {},          // { "Q1": "A", "Q3": null (skipped), ... }
   startedAt: null,
+  ndaApprovedAt: null,  // ISO time the NDA box was ticked (first approval is kept)
 };
 
 // ── Persistence ────────────────────────────────────
@@ -170,6 +171,9 @@ function initWelcome() {
   }
 
   document.getElementById("btn-begin").addEventListener("click", handleBegin);
+  document.getElementById("input-nda").addEventListener("change", (e) => {
+    if (e.target.checked) document.getElementById("error-nda").classList.remove("visible");
+  });
 
   // Enter key in any welcome-screen field starts the assessment, same as clicking the button.
   function trySubmitOnEnter(e) {
@@ -212,6 +216,12 @@ async function handleBegin() {
     document.getElementById("error-passcode").classList.remove("visible");
     document.getElementById("input-passcode").classList.remove("error");
   }
+  if (!document.getElementById("input-nda").checked) {
+    document.getElementById("error-nda").classList.add("visible");
+    valid = false;
+  } else {
+    document.getElementById("error-nda").classList.remove("visible");
+  }
   if (!valid) return;
 
   const btn = document.getElementById("btn-begin");
@@ -241,6 +251,7 @@ async function handleBegin() {
   state.name = name;
   state.email = email;
   if (!state.startedAt) state.startedAt = new Date().toISOString();
+  if (!state.ndaApprovedAt) state.ndaApprovedAt = new Date().toISOString();
   saveState();
   renderStage(state.currentStage);
   showScreen("screen-scenario");
@@ -552,6 +563,8 @@ async function submitAssessment() {
       payload[q.id] = state.answers[q.id] ?? "SKIPPED";
     });
   });
+  // Added last so existing column order is untouched; sheet column is optional.
+  payload.ndaApprovedAt = state.ndaApprovedAt || "";
 
   try {
     await fetch(CONFIG.SUBMIT_URL, {
