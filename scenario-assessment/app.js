@@ -380,6 +380,7 @@ function chooseAnswer(qid, letter) {
 
 function skipCurrentQuestion(qid) {
   if (advanceScheduled || qid in state.answers) return; // guard against double-fire
+  if (!confirm("Are you sure you want to skip this question? You will not be able to go back")) return;
   advanceScheduled = true;
   state.answers[qid] = null;
   saveState();

@@ -653,7 +653,7 @@ function renderComplete() {
           '<div class="stat-tile"><span class="stat-tile-val">' + vals.length + '</span><span class="stat-tile-lbl">Answered</span></div>' +
           '<div class="stat-tile"><span class="stat-tile-val">' + skills.size + '</span><span class="stat-tile-lbl">Areas covered</span></div>' +
         '</div>' +
-        '<button class="btn btn-secondary btn-full" id="new-session-btn">Start a new session</button>' +
+        '<a class="btn btn-primary btn-full" id="done-btn" href="../">Done</a>' +
       '</div>' +
     '</div>'
   );
@@ -751,7 +751,6 @@ function bindEvents() {
     }
 
     case 'complete': {
-      document.getElementById('new-session-btn').addEventListener('click', handleNewSession);
       const retryBtn = document.getElementById('retry-submit-btn');
       if (retryBtn) retryBtn.addEventListener('click', handleRetrySubmit);
       break;
@@ -784,7 +783,7 @@ function getPrimaryButtonForScreen() {
   switch (state.screen) {
     case 'resume':   return document.getElementById('resume-btn');
     case 'question': return document.getElementById('next-btn');
-    case 'complete': return document.getElementById('retry-submit-btn') || document.getElementById('new-session-btn');
+    case 'complete': return document.getElementById('retry-submit-btn') || document.getElementById('done-btn');
     default:         return null;
   }
 }
