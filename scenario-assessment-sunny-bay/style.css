@@ -731,3 +731,28 @@ body {
   color: #fff;
   font-size: 72px;
 }
+
+/* ── Skip confirmation modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28,21,48,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+.modal {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(38,18,80,.25);
+  padding: 24px;
+  width: 100%;
+  max-width: 380px;
+  font-family: var(--font);
+}
+.modal h3 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+.modal p { font-size: 15px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 20px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-actions .btn { width: auto; margin-top: 0; padding: 10px 22px; font-size: 14px; }

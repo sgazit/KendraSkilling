@@ -436,7 +436,35 @@ function chooseAnswer(qid, letter) {
 
 function skipCurrentQuestion(qid) {
   if (advanceScheduled || qid in state.answers) return; // guard against double-fire
-  if (!confirm("Are you sure you want to skip this question? You will not be able to go back")) return;
+  showSkipConfirm(() => performSkip(qid));
+}
+
+// Branded confirm dialog (native confirm() shows the site's hostname as its title)
+function showSkipConfirm(onConfirm) {
+  if (document.getElementById("skip-modal")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "skip-modal";
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="skip-modal-title" aria-describedby="skip-modal-msg">
+      <h3 id="skip-modal-title">Kendra Skilling says</h3>
+      <p id="skip-modal-msg">Are you sure you want to skip this question?<br>You will not be able to go back</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="skip-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="skip-modal-ok">OK</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  document.getElementById("skip-modal-cancel").addEventListener("click", close);
+  document.getElementById("skip-modal-ok").addEventListener("click", () => { close(); onConfirm(); });
+  document.getElementById("skip-modal-ok").focus();
+}
+
+function performSkip(qid) {
+  if (advanceScheduled || qid in state.answers) return;
   advanceScheduled = true;
   state.answers[qid] = null;
   saveState();
