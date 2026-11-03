@@ -355,7 +355,7 @@
 <script src="kendra-session.js"></script>
 <script src="kendra-progress.js"></script>
 <script>
-  // Passcodes are checked by the self-assessment's Apps Script backend; keep in sync with self-assessment/app.js.
+  // Email + password are checked by the self-assessment's Apps Script backend; keep in sync with self-assessment/app.js.
   const VERIFY_URL = 'https://script.google.com/macros/s/AKfycbx0_yl9m3wZU8joyC1Q82nHS1Gt9YozaLYHbR16JOzm_K5aRpdPW4qSPQH02UxCz1YR/exec';
 
   // Receivers that hold each assessment's Progress tab; keep in sync with each app.js CONFIG.SUBMIT_URL.
@@ -367,10 +367,6 @@
   const $ = (id) => document.getElementById(id);
   const fields = ['first-name', 'last-name', 'email', 'passcode'].map($);
   const btn = $('login-btn');
-
-  function keyFromUrl() {
-    try { return new URLSearchParams(location.search).get('key') || ''; } catch (err) { return ''; }
-  }
 
   function badgeFor(p) {
     if (!p) return null;
@@ -421,17 +417,18 @@
     $('login-error').classList.toggle('visible', !!msg);
   }
 
-  async function verifyPasscode(passcode) {
+  async function verifyLogin(email, passcode) {
     let data;
     try {
-      const res = await fetch(VERIFY_URL + '?key=' + encodeURIComponent(passcode));
+      const res = await fetch(VERIFY_URL + '?action=verify&email=' + encodeURIComponent(email) +
+                              '&password=' + encodeURIComponent(passcode));
       if (!res.ok) throw new Error();
       data = await res.json();
     } catch (err) {
       throw new Error('Could not reach the assessment server. Check your connection and try again.');
     }
     if (data.error) {
-      throw new Error(data.error === 'Invalid or missing passcode.' ? 'Incorrect password.' : data.error);
+      throw new Error(data.error);
     }
   }
 
@@ -442,7 +439,7 @@
     btn.textContent = 'Signing in…';
     showError('');
     try {
-      await verifyPasscode(passcode);
+      await verifyLogin(email, passcode);
     } catch (err) {
       showError(err.message);
       btn.textContent = 'Sign in';
@@ -478,12 +475,6 @@
   if (existing) {
     showAssessments(existing);
   } else {
-    const key = keyFromUrl();
-    if (key) {
-      $('passcode').value = key;
-      $('passcode').hidden = true;
-      $('passcode-label').hidden = true;
-    }
     refreshBtn();
   }
 </script>

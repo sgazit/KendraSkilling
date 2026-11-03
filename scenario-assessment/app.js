@@ -70,12 +70,13 @@ function getKeyFromUrl() {
  * Fetches the scenario set from the Apps Script backend using the given
  * passcode. Throws with a user-facing message on any failure.
  */
-async function fetchScenarios(passcode) {
+async function fetchScenarios(email, passcode) {
   if (!CONFIG.APPS_SCRIPT_URL) {
     throw new Error("This app has not been connected to a data source yet (APPS_SCRIPT_URL is empty in app.js).");
   }
 
-  const url = CONFIG.APPS_SCRIPT_URL + "?key=" + encodeURIComponent(passcode);
+  const url = CONFIG.APPS_SCRIPT_URL + "?email=" + encodeURIComponent(email) +
+    "&password=" + encodeURIComponent(passcode);
   let res;
   try {
     res = await fetch(url);
@@ -95,7 +96,7 @@ async function fetchScenarios(passcode) {
   }
 
   if (data.error) {
-    throw new Error(data.error === "Invalid or missing passcode." ? "Incorrect passcode." : data.error);
+    throw new Error(data.error);
   }
 
   if (!Array.isArray(data.scenarios) || data.scenarios.length === 0) {
@@ -277,7 +278,7 @@ async function handleBegin() {
 
   if (SCENARIOS.length === 0) {
     try {
-      SCENARIOS = await fetchScenarios(passcode);
+      SCENARIOS = await fetchScenarios(email, passcode);
     } catch (err) {
       // The hub accepted this passcode, so a failure here means it is stale or the
       // backend is unreachable. Show the reason, and make sure the next visit to the hub re-asks.
@@ -562,6 +563,8 @@ async function submitAssessment() {
   });
   // Added last so existing column order is untouched; sheet column is optional.
   payload.ndaApprovedAt = state.ndaApprovedAt || "";
+  // Checked by the receiver, never stored in the sheet.
+  payload.password = (KendraSession.get() || {}).passcode || "";
 
   try {
     await fetch(CONFIG.SUBMIT_URL, {

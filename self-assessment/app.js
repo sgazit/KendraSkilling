@@ -83,12 +83,13 @@ function getKeyFromUrl() {
  * Fetches the question set from the Apps Script backend using the given
  * passcode. Throws with a user-facing message on any failure.
  */
-async function fetchQuestions(passcode) {
+async function fetchQuestions(email, passcode) {
   if (!CONFIG.APPS_SCRIPT_URL) {
     throw new Error('This app has not been connected to a data source yet (APPS_SCRIPT_URL is empty in app.js).');
   }
 
-  const url = CONFIG.APPS_SCRIPT_URL + '?key=' + encodeURIComponent(passcode);
+  const url = CONFIG.APPS_SCRIPT_URL + '?email=' + encodeURIComponent(email) +
+              '&password=' + encodeURIComponent(passcode);
   let res;
   try {
     res = await fetch(url);
@@ -108,7 +109,7 @@ async function fetchQuestions(passcode) {
   }
 
   if (data.error) {
-    throw new Error(data.error === 'Invalid or missing passcode.' ? 'Incorrect passcode.' : data.error);
+    throw new Error(data.error);
   }
 
   if (!Array.isArray(data.questions) || data.questions.length === 0) {
@@ -146,6 +147,7 @@ async function submitResults(session) {
     completedAt: session.completedAt,
     answers:     answers,
     ndaApprovedAt: session.ndaApprovedAt || '',  // last key: existing fields unchanged
+    password:    (KendraSession.get() || {}).passcode || '',  // checked by the receiver, never stored
   };
 
   let res;
@@ -384,7 +386,7 @@ async function handleLoginSubmit(rawName, rawEmail, rawPasscode, ndaApprovedAt) 
 
   if (QUESTIONS.length === 0) {
     try {
-      const questions = await fetchQuestions(passcode);
+      const questions = await fetchQuestions(email, passcode);
       QUESTIONS = questions;
       TOTAL = QUESTIONS.length;
     } catch (err) {
