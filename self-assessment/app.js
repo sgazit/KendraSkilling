@@ -229,6 +229,45 @@ function esc(str) {
 }
 
 /* ─────────────────────────────────────────
+   PROGRESS (server-side copy, see kendra-progress.js)
+   ───────────────────────────────────────── */
+
+const PROGRESS_EVERY = 10;  // save to the server every N answers
+
+function reportProgress(session, status) {
+  const login = KendraSession.get();
+  if (!login || !session) return Promise.resolve(false);
+  return KendraProgress.save(CONFIG.SUBMIT_URL, login.passcode, {
+    name:          session.name,
+    email:         session.email,
+    status:        status || 'in_progress',
+    answered:      Object.keys(session.answers).length,
+    total:         session.order.length,
+    startedAt:     session.startedAt,
+    completedAt:   session.completedAt || '',
+    ndaApprovedAt: session.ndaApprovedAt || '',
+    state:         { answers: session.answers, currentIdx: session.currentIdx },
+  });
+}
+
+/**
+ * Picks the more advanced of this browser's saved session and the server copy,
+ * so a participant can pick up on another device. Returns an incomplete session or null.
+ */
+function chooseResumeSession(local, remote, name, email, ndaApprovedAt) {
+  const localIdx = local && !local.complete ? local.currentIdx : -1;
+  const remoteState = remote && remote.status === 'in_progress' && remote.state;
+  if (remoteState && remoteState.answers && remoteState.currentIdx > localIdx && remoteState.currentIdx > 0) {
+    const session = createSession(name, email, ndaApprovedAt);
+    session.answers    = remoteState.answers;
+    session.currentIdx = remoteState.currentIdx;
+    session.startedAt  = remote.startedAt || session.startedAt;
+    return session;
+  }
+  return localIdx >= 0 ? local : null;
+}
+
+/* ─────────────────────────────────────────
    STORAGE
    ───────────────────────────────────────── */
 
@@ -350,15 +389,17 @@ async function handleLoginSubmit(rawName, rawEmail, rawPasscode, ndaApprovedAt) 
     }
   }
 
-  const existing = loadSession(name);
+  const remote   = await KendraProgress.load(CONFIG.SUBMIT_URL, passcode, email);
+  const existing = chooseResumeSession(loadSession(name), remote, name, email, ndaApprovedAt);
 
-  if (existing && !existing.complete) {
+  if (existing) {
     // Resume prompt
     setState({ screen: 'resume', session: Object.assign({}, existing, { email: email, ndaApprovedAt: existing.ndaApprovedAt || new Date().toISOString() }), loadError: null });
   } else {
     // Fresh start (or previous attempt was complete)
     const session = createSession(name, email, ndaApprovedAt);
     saveSession(session);
+    reportProgress(session);
     setState({ screen: 'question', session: session, selectedValue: null, showValidation: false, loadError: null });
   }
 }
@@ -368,8 +409,9 @@ function handleResume() {
 }
 
 function handleRestart() {
-  const session = createSession(state.session.name, state.session.email);
+  const session = createSession(state.session.name, state.session.email, state.session.ndaApprovedAt);
   saveSession(session);
+  reportProgress(session);
   setState({ screen: 'question', session: session, selectedValue: null, showValidation: false });
 }
 
@@ -402,6 +444,7 @@ function handleNext() {
     setState({ screen: 'complete', session: newSession, selectedValue: null, submitStatus: 'saving', submitErrorMsg: null });
     submitCompletedSession(newSession);
   } else {
+    if (nextIdx % PROGRESS_EVERY === 0) reportProgress(newSession);
     setState({ session: newSession, selectedValue: null, showValidation: false });
   }
 }
@@ -410,6 +453,7 @@ function handleNext() {
 async function submitCompletedSession(session) {
   try {
     await submitResults(session);
+    reportProgress(session, 'completed');
     setState({ submitStatus: 'saved', submitErrorMsg: null });
   } catch (err) {
     setState({ submitStatus: 'error', submitErrorMsg: err.message });
@@ -423,6 +467,7 @@ function handleRetrySubmit() {
 
 function handleSaveAndExit() {
   saveSession(state.session);
+  reportProgress(state.session);
   showToast('Progress saved — pick up where you left off anytime.');
   // Return to the hub after toast so user knows they can come back
   setTimeout(function () {
@@ -822,6 +867,13 @@ document.addEventListener('keydown', function (e) {
 /* ─────────────────────────────────────────
    BOOT
    ───────────────────────────────────────── */
+
+// Closing the tab mid-assessment: send what we have (keepalive lets it finish).
+window.addEventListener('pagehide', function () {
+  if (state.screen === 'question' && state.session && !state.session.complete) {
+    reportProgress(state.session);
+  }
+});
 
 document.addEventListener('DOMContentLoaded', function () {
   const login = KendraSession.get();

@@ -140,6 +140,38 @@ function clearState() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
+// ── Progress (server-side copy, see kendra-progress.js) ──
+let submitted = false;
+
+function reportProgress(status) {
+  const login = KendraSession.get();
+  if (!login || !state.name) return Promise.resolve(false);
+  return KendraProgress.save(CONFIG.SUBMIT_URL, login.passcode, {
+    name:          state.name,
+    email:         state.email,
+    status:        status || "in_progress",
+    answered:      Object.keys(state.answers).length,
+    total:         SCENARIOS.reduce((n, sc) => n + sc.questions.length, 0),
+    startedAt:     state.startedAt,
+    ndaApprovedAt: state.ndaApprovedAt || "",
+    state: {
+      answers:         state.answers,
+      currentScenario: state.currentScenario,
+      currentQuestion: state.currentQuestion,
+    },
+  });
+}
+
+// Adopts the server copy when it is further along than this browser's (e.g. another device).
+function mergeRemoteProgress(remote) {
+  if (!remote || remote.status !== "in_progress" || !remote.state || !remote.state.answers) return;
+  if (Object.keys(remote.state.answers).length <= Object.keys(state.answers).length) return;
+  state.answers = remote.state.answers;
+  state.currentScenario = remote.state.currentScenario || 0;
+  state.currentQuestion = remote.state.currentQuestion || 0;
+  if (remote.startedAt) state.startedAt = remote.startedAt;
+}
+
 // ── Screen router ──────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -254,9 +286,11 @@ async function handleBegin() {
 
   state.name = name;
   state.email = email;
+  mergeRemoteProgress(await KendraProgress.load(CONFIG.SUBMIT_URL, passcode, email));
   if (!state.startedAt) state.startedAt = new Date().toISOString();
   if (!state.ndaApprovedAt) state.ndaApprovedAt = new Date().toISOString();
   saveState();
+  reportProgress();
   renderScenario(state.currentScenario);
   showScreen("screen-scenario");
 }
@@ -323,6 +357,7 @@ function renderScenario(idx) {
 
   document.getElementById("btn-save-exit").addEventListener("click", () => {
     saveState();
+    reportProgress();
     showScreen("screen-welcome");
   });
 
@@ -445,9 +480,11 @@ function advanceFlow() {
     state.currentScenario++;
     state.currentQuestion = 0;
     saveState();
+    reportProgress();
     renderScenario(state.currentScenario);
     showScreen("screen-scenario");
   } else {
+    reportProgress();
     renderReview();
     showScreen("screen-review");
   }
@@ -522,6 +559,8 @@ async function submitAssessment() {
       body: JSON.stringify(payload),
     });
     // no-cors means we can't read response, assume success
+    submitted = true;
+    reportProgress("completed");
     clearState();
     document.getElementById("thankyou-name").textContent = `Thank you, ${state.name}!`;
     showScreen("screen-thankyou");
@@ -563,4 +602,9 @@ function launchConfetti() {
 }
 
 // ── Boot ───────────────────────────────────────────
+// Closing the tab mid-assessment: send what we have (keepalive lets it finish).
+window.addEventListener("pagehide", () => {
+  if (!submitted && SCENARIOS.length > 0 && Object.keys(state.answers).length > 0) reportProgress();
+});
+
 document.addEventListener("DOMContentLoaded", initWelcome);

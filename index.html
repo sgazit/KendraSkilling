@@ -252,6 +252,20 @@
     margin-left: 6px;
   }
 
+  .status-badge {
+    align-self: flex-start;
+    margin-bottom: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--accent-light);
+    color: var(--text-secondary);
+  }
+  .status-badge[hidden] { display: none; }
+  .status-badge.in-progress { background: #FEF3DC; color: #8A5A00; }
+  .status-badge.completed { background: #DDF6F2; color: #0B7468; }
+
   [hidden] { display: none !important; }
 
   .hub-footer {
@@ -317,6 +331,7 @@
   <div class="assessment-grid">
     <a class="assessment-card" style="--card-color:#10B5A4;" href="self-assessment/">
       <div class="card-icon">📋</div>
+      <span class="status-badge" id="status-self" hidden></span>
       <div class="card-title">Self Assessment</div>
       <div class="card-desc">A quick self-check across your technical skills. Rate yourself honestly across a set of statements, there's no right or wrong answer.</div>
       <span class="card-cta">Start Self Assessment →</span>
@@ -324,6 +339,7 @@
 
     <a class="assessment-card" style="--card-color:#6422C9;" href="scenario-assessment/">
       <div class="card-icon">🧭</div>
+      <span class="status-badge" id="status-scenario" hidden></span>
       <div class="card-title">Engineer Assessment</div>
       <div class="card-desc">Five real-world scenarios, each with a short series of questions. Read carefully and choose the response that best reflects how you'd approach the situation.</div>
       <span class="card-cta">Start Engineer Assessment →</span>
@@ -337,9 +353,16 @@
 
 
 <script src="kendra-session.js"></script>
+<script src="kendra-progress.js"></script>
 <script>
   // Passcodes are checked by the self-assessment's Apps Script backend; keep in sync with self-assessment/app.js.
   const VERIFY_URL = 'https://script.google.com/macros/s/AKfycbx0_yl9m3wZU8joyC1Q82nHS1Gt9YozaLYHbR16JOzm_K5aRpdPW4qSPQH02UxCz1YR/exec';
+
+  // Receivers that hold each assessment's Progress tab; keep in sync with each app.js CONFIG.SUBMIT_URL.
+  const PROGRESS_URLS = {
+    self:     'https://script.google.com/macros/s/AKfycbyKFFcZ0jacQz80A9gFRxJcMQHT9oWj64-b11_a2Wt1HUiNSffln-zzQ_AuvCkWSKyF/exec',
+    scenario: 'https://script.google.com/macros/s/AKfycbxaO4rGHSNYoEbL_5BJmBt9b8DTPfST6GbDmwsyPXiB0LfvGq5lRR1f6k8rzMCRAz3A/exec',
+  };
 
   const $ = (id) => document.getElementById(id);
   const fields = ['first-name', 'last-name', 'email', 'passcode'].map($);
@@ -349,14 +372,39 @@
     try { return new URLSearchParams(location.search).get('key') || ''; } catch (err) { return ''; }
   }
 
+  function badgeFor(p) {
+    if (!p) return null;
+    const retaking = p.status === 'in_progress' && p.completedAt;
+    if (p.status === 'completed' || retaking) {
+      return { cls: 'completed', text: retaking ? 'Completed · retake in progress' : 'Completed ✓' };
+    }
+    if (p.status === 'in_progress' && p.answered > 0) {
+      return { cls: 'in-progress', text: 'In progress' };
+    }
+    return null;
+  }
+
+  async function loadStatuses(login) {
+    await Promise.all(Object.keys(PROGRESS_URLS).map(async (key) => {
+      const badge = $('status-' + key);
+      const info = badgeFor(await KendraProgress.load(PROGRESS_URLS[key], login.passcode, login.email));
+      if (!info) return;
+      badge.className = 'status-badge ' + info.cls;
+      badge.textContent = info.text;
+      badge.hidden = false;
+    }));
+  }
+
   function showAssessments(login) {
     $('login-card').hidden = true;
     $('assessments').hidden = false;
     $('signed-in-name').textContent = login.name;
     $('hub-sub').textContent = 'Choose an assessment below to get started.';
+    loadStatuses(login);
   }
 
   function showLogin() {
+    Object.keys(PROGRESS_URLS).forEach((key) => { $('status-' + key).hidden = true; });
     $('login-card').hidden = false;
     $('assessments').hidden = true;
     $('hub-sub').textContent = 'Sign in to get started.';
