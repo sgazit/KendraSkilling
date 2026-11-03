@@ -266,7 +266,7 @@ function loadSession(name) {
  * The question order is seeded by name so it's consistent
  * across devices for the same user but different from others.
  */
-function createSession(name, email) {
+function createSession(name, email, ndaApprovedAt) {
   const seed  = nameToSeed(name);
   const order = seededShuffle(QUESTIONS.map(function (q) { return q.id; }), seed);
   return {
@@ -278,7 +278,7 @@ function createSession(name, email) {
     complete:    false,
     startedAt:   new Date().toISOString(),
     completedAt: null,
-    ndaApprovedAt: new Date().toISOString(),  // the NDA box is ticked before a session starts
+    ndaApprovedAt: ndaApprovedAt || new Date().toISOString(),  // the NDA box is ticked on the hub before a session starts
     version:     1,           // schema version for future migrations
   };
 }
@@ -291,7 +291,7 @@ function createSession(name, email) {
  * Screens: 'login' | 'loading' | 'resume' | 'question' | 'complete'
  */
 let state = {
-  screen:          'login',
+  screen:          'loading',
   session:         null,
   selectedValue:   null,   // currently highlighted Likert option
   showValidation:  false,  // show "please select" hint
@@ -328,7 +328,7 @@ function showToast(message) {
    ACTION HANDLERS
    ───────────────────────────────────────── */
 
-async function handleLoginSubmit(rawName, rawEmail, rawPasscode) {
+async function handleLoginSubmit(rawName, rawEmail, rawPasscode, ndaApprovedAt) {
   const name     = rawName.trim();
   const email    = (rawEmail || '').trim();
   const passcode = (rawPasscode || '').trim();
@@ -342,7 +342,10 @@ async function handleLoginSubmit(rawName, rawEmail, rawPasscode) {
       QUESTIONS = questions;
       TOTAL = QUESTIONS.length;
     } catch (err) {
-      setState({ screen: 'login', loadError: err.message });
+      // The hub login was accepted earlier, so a failure here means the stored
+      // passcode is stale or the backend is unreachable — send them back to sign in again.
+      KendraSession.clear();
+      location.replace('../');
       return;
     }
   }
@@ -354,7 +357,7 @@ async function handleLoginSubmit(rawName, rawEmail, rawPasscode) {
     setState({ screen: 'resume', session: Object.assign({}, existing, { email: email, ndaApprovedAt: existing.ndaApprovedAt || new Date().toISOString() }), loadError: null });
   } else {
     // Fresh start (or previous attempt was complete)
-    const session = createSession(name, email);
+    const session = createSession(name, email, ndaApprovedAt);
     saveSession(session);
     setState({ screen: 'question', session: session, selectedValue: null, showValidation: false, loadError: null });
   }
@@ -421,14 +424,14 @@ function handleRetrySubmit() {
 function handleSaveAndExit() {
   saveSession(state.session);
   showToast('Progress saved — pick up where you left off anytime.');
-  // Return to login after toast so user knows they can come back
+  // Return to the hub after toast so user knows they can come back
   setTimeout(function () {
-    setState({ screen: 'login', session: null, selectedValue: null, showValidation: false });
+    location.href = '../';
   }, 1200);
 }
 
 function handleNewSession() {
-  setState({ screen: 'login', session: null, selectedValue: null, showValidation: false });
+  location.href = '../';
 }
 
 /* ─────────────────────────────────────────
@@ -821,5 +824,11 @@ document.addEventListener('keydown', function (e) {
    ───────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', function () {
+  const login = KendraSession.get();
+  if (!login) {
+    location.replace('../');
+    return;
+  }
   render();
+  handleLoginSubmit(login.name, login.email, login.passcode, login.ndaApprovedAt);
 });

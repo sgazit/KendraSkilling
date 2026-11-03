@@ -149,11 +149,15 @@ function showScreen(id) {
 
 // ── Welcome screen ─────────────────────────────────
 function initWelcome() {
+  const login = KendraSession.get();
+  if (!login) {
+    location.replace("../");
+    return;
+  }
+
   const saved = loadState();
   if (saved) {
     state = saved;
-    document.getElementById("input-name").value = state.name;
-    document.getElementById("input-email").value = state.email;
     const notice = document.getElementById("resume-notice");
     const scenarioNum = state.currentScenario + 1;
     const questionNum = state.currentQuestion + 1;
@@ -162,26 +166,18 @@ function initWelcome() {
     document.getElementById("begin-label").textContent = "Resume Assessment →";
   }
 
-  const keyFromUrl = getKeyFromUrl();
-  const passcodeField = document.getElementById("field-passcode");
-  const passcodeInput = document.getElementById("input-passcode");
-  if (keyFromUrl) {
-    passcodeField.style.display = "none";
-    passcodeInput.value = keyFromUrl;
-  }
+  // Identity, passcode and NDA were collected on the hub; the form fields stay in
+  // the DOM (handleBegin reads them) but are hidden.
+  document.getElementById("input-name").value = login.name;
+  document.getElementById("input-email").value = login.email;
+  document.getElementById("input-passcode").value = login.passcode;
+  document.getElementById("input-nda").checked = true;
+  document.querySelectorAll("#screen-welcome .field, #screen-welcome .nda-check").forEach(el => {
+    el.style.display = "none";
+  });
+  if (!state.ndaApprovedAt) state.ndaApprovedAt = login.ndaApprovedAt;
 
   document.getElementById("btn-begin").addEventListener("click", handleBegin);
-  document.getElementById("input-nda").addEventListener("change", (e) => {
-    if (e.target.checked) document.getElementById("error-nda").classList.remove("visible");
-  });
-
-  // Enter key in any welcome-screen field starts the assessment, same as clicking the button.
-  function trySubmitOnEnter(e) {
-    if (e.key === "Enter" && !document.getElementById("btn-begin").disabled) handleBegin();
-  }
-  document.getElementById("input-name").addEventListener("keydown", trySubmitOnEnter);
-  document.getElementById("input-email").addEventListener("keydown", trySubmitOnEnter);
-  passcodeInput.addEventListener("keydown", trySubmitOnEnter);
 }
 
 async function handleBegin() {
@@ -239,10 +235,18 @@ async function handleBegin() {
     try {
       SCENARIOS = await fetchScenarios(passcode);
     } catch (err) {
+      // The hub accepted this passcode, so a failure here means it is stale or the
+      // backend is unreachable. Show the reason, and make sure the next visit to the hub re-asks.
+      KendraSession.clear();
       btn.disabled = false;
       label.textContent = resumeLabel;
       spinner.classList.remove("visible");
-      errBox.textContent = err.message;
+      errBox.innerHTML = "";
+      errBox.append(err.message + " ");
+      const back = document.createElement("a");
+      back.href = "../";
+      back.textContent = "Back to sign in";
+      errBox.append(back);
       errBox.classList.add("visible");
       return;
     }

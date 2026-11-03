@@ -168,6 +168,92 @@
     transform: translateY(-1px);
   }
 
+  .login-card {
+    max-width: 440px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 32px 28px;
+    animation: fadeInUp 480ms cubic-bezier(.4,0,.2,1) both;
+  }
+  .login-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .login-row { grid-template-columns: 1fr; } }
+  .login-card label.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 14px 0 6px;
+  }
+  .login-card input[type="text"],
+  .login-card input[type="email"],
+  .login-card input[type="password"] {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    color: var(--text-primary);
+    background: var(--surface);
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .login-card input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .nda-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .nda-label input { margin-top: 3px; accent-color: var(--accent); }
+  .nda-label a { color: var(--accent); font-weight: 600; }
+  .login-error {
+    display: none;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--k-coral);
+  }
+  .login-error.visible { display: block; }
+  .login-btn {
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--k-purple), color-mix(in srgb, var(--k-purple) 70%, #fff));
+    transition: all var(--transition);
+  }
+  .login-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .signed-in {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .signed-in button {
+    background: none;
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    margin-left: 6px;
+  }
+
+  [hidden] { display: none !important; }
+
   .hub-footer {
     text-align: center;
     margin-top: 40px;
@@ -200,9 +286,34 @@
       </svg>
     </div>
     <h1>Kendra Skilling</h1>
-    <p>Choose an assessment below to get started.</p>
+    <p id="hub-sub">Sign in to get started.</p>
   </div>
 
+  <div class="login-card" id="login-card">
+    <div class="login-row">
+      <div>
+        <label class="field-label" for="first-name">First name</label>
+        <input type="text" id="first-name" autocomplete="given-name">
+      </div>
+      <div>
+        <label class="field-label" for="last-name">Last name</label>
+        <input type="text" id="last-name" autocomplete="family-name">
+      </div>
+    </div>
+    <label class="field-label" for="email">Email</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+    <label class="field-label" for="passcode" id="passcode-label">Password</label>
+    <input type="password" id="passcode" placeholder="Provided by your Kendra Practitioner" autocomplete="off">
+    <label class="nda-label">
+      <input type="checkbox" id="nda">
+      <span>I have read and approve the <a href="nda/" target="_blank" rel="noopener">Kendra Terms and Conditions</a>.</span>
+    </label>
+    <button class="login-btn" id="login-btn" disabled>Sign in</button>
+    <div class="login-error" id="login-error" role="alert"></div>
+  </div>
+
+  <div id="assessments" hidden>
+    <div class="signed-in">Signed in as <strong id="signed-in-name"></strong><button type="button" id="sign-out">Sign out</button></div>
   <div class="assessment-grid">
     <a class="assessment-card" style="--card-color:#10B5A4;" href="self-assessment/">
       <div class="card-icon">📋</div>
@@ -217,11 +328,116 @@
       <div class="card-desc">Five real-world scenarios, each with a short series of questions. Read carefully and choose the response that best reflects how you'd approach the situation.</div>
       <span class="card-cta">Start Engineer Assessment →</span>
     </a>
+    </div>
   </div>
 
   <div class="hub-footer">Kendra (C) 2026</div>
 
 </div>
 
+
+<script src="kendra-session.js"></script>
+<script>
+  // Passcodes are checked by the self-assessment's Apps Script backend; keep in sync with self-assessment/app.js.
+  const VERIFY_URL = 'https://script.google.com/macros/s/AKfycbx0_yl9m3wZU8joyC1Q82nHS1Gt9YozaLYHbR16JOzm_K5aRpdPW4qSPQH02UxCz1YR/exec';
+
+  const $ = (id) => document.getElementById(id);
+  const fields = ['first-name', 'last-name', 'email', 'passcode'].map($);
+  const btn = $('login-btn');
+
+  function keyFromUrl() {
+    try { return new URLSearchParams(location.search).get('key') || ''; } catch (err) { return ''; }
+  }
+
+  function showAssessments(login) {
+    $('login-card').hidden = true;
+    $('assessments').hidden = false;
+    $('signed-in-name').textContent = login.name;
+    $('hub-sub').textContent = 'Choose an assessment below to get started.';
+  }
+
+  function showLogin() {
+    $('login-card').hidden = false;
+    $('assessments').hidden = true;
+    $('hub-sub').textContent = 'Sign in to get started.';
+    $('first-name').focus();
+  }
+
+  function refreshBtn() {
+    const [first, last, email, pass] = fields.map((f) => f.value.trim());
+    btn.disabled = !(first && last && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && pass && $('nda').checked);
+  }
+
+  function showError(msg) {
+    $('login-error').textContent = msg;
+    $('login-error').classList.toggle('visible', !!msg);
+  }
+
+  async function verifyPasscode(passcode) {
+    let data;
+    try {
+      const res = await fetch(VERIFY_URL + '?key=' + encodeURIComponent(passcode));
+      if (!res.ok) throw new Error();
+      data = await res.json();
+    } catch (err) {
+      throw new Error('Could not reach the assessment server. Check your connection and try again.');
+    }
+    if (data.error) {
+      throw new Error(data.error === 'Invalid or missing passcode.' ? 'Incorrect password.' : data.error);
+    }
+  }
+
+  async function signIn() {
+    if (btn.disabled) return;
+    const [first, last, email, passcode] = fields.map((f) => f.value.trim());
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    showError('');
+    try {
+      await verifyPasscode(passcode);
+    } catch (err) {
+      showError(err.message);
+      btn.textContent = 'Sign in';
+      refreshBtn();
+      return;
+    }
+    const login = {
+      firstName: first,
+      lastName: last,
+      name: first + ' ' + last,
+      email: email,
+      passcode: passcode,
+      ndaApprovedAt: new Date().toISOString(),
+    };
+    KendraSession.set(login);
+    $('passcode').value = '';
+    btn.textContent = 'Sign in';
+    showAssessments(login);
+  }
+
+  fields.forEach((f) => {
+    f.addEventListener('input', refreshBtn);
+    f.addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
+  });
+  $('nda').addEventListener('change', refreshBtn);
+  btn.addEventListener('click', signIn);
+  $('sign-out').addEventListener('click', () => {
+    KendraSession.clear();
+    showLogin();
+  });
+
+  const existing = KendraSession.get();
+  if (existing) {
+    showAssessments(existing);
+  } else {
+    const key = keyFromUrl();
+    if (key) {
+      $('passcode').value = key;
+      $('passcode').hidden = true;
+      $('passcode-label').hidden = true;
+    }
+    refreshBtn();
+  }
+</script>
 </body>
 </html>
