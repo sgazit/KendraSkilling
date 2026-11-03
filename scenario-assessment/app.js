@@ -358,7 +358,7 @@ function renderScenario(idx) {
   document.getElementById("btn-save-exit").addEventListener("click", () => {
     saveState();
     reportProgress();
-    showScreen("screen-welcome");
+    location.href = "../";
   });
 
   renderQuestion(idx);
