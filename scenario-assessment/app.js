@@ -162,14 +162,26 @@ function reportProgress(status) {
   });
 }
 
-// Adopts the server copy when it is further along than this browser's (e.g. another device).
+// Merges the server copy into this browser's state so the two line up even if the last save
+// to either side was lost. Answers are combined by question; where both sides answered the
+// same question, the copy that is further along wins. The caller saves the result to both.
 function mergeRemoteProgress(remote) {
   if (!remote || remote.status !== "in_progress" || !remote.state || !remote.state.answers) return;
-  if (Object.keys(remote.state.answers).length <= Object.keys(state.answers).length) return;
-  state.answers = remote.state.answers;
-  state.currentScenario = remote.state.currentScenario || 0;
-  state.currentQuestion = remote.state.currentQuestion || 0;
-  if (remote.startedAt) state.startedAt = remote.startedAt;
+  const rs = remote.state;
+  const localAnswered = Object.keys(state.answers).length;
+  const remoteAhead = Object.keys(rs.answers).length > localAnswered;
+
+  state.answers = remoteAhead
+    ? Object.assign({}, state.answers, rs.answers)
+    : Object.assign({}, rs.answers, state.answers);
+
+  const localPos  = state.currentScenario * 1000 + state.currentQuestion;
+  const remotePos = (rs.currentScenario || 0) * 1000 + (rs.currentQuestion || 0);
+  if (remotePos > localPos) {
+    state.currentScenario = rs.currentScenario || 0;
+    state.currentQuestion = rs.currentQuestion || 0;
+  }
+  if (!state.startedAt && remote.startedAt) state.startedAt = remote.startedAt;
 }
 
 // ── Screen router ──────────────────────────────────
@@ -560,7 +572,7 @@ async function submitAssessment() {
     });
     // no-cors means we can't read response, assume success
     submitted = true;
-    reportProgress("completed");
+    reportProgress("completed").then(ok => { if (!ok) reportProgress("completed"); });
     clearState();
     document.getElementById("thankyou-name").textContent = `Thank you, ${state.name}!`;
     showScreen("screen-thankyou");

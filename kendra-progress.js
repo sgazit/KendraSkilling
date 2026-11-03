@@ -10,6 +10,7 @@ const KendraProgress = {
    * record: { name, email, status, answered, total, startedAt, completedAt?, ndaApprovedAt, state }
    * status: 'in_progress' | 'completed'
    */
+  /** Resolves true only when the receiver confirmed the save. */
   save(url, passcode, record) {
     if (!url) return Promise.resolve(false);
     try {
@@ -19,7 +20,8 @@ const KendraProgress = {
         headers:   { 'Content-Type': 'text/plain;charset=utf-8' },
         body:      JSON.stringify(Object.assign({ type: 'progress', key: passcode }, record)),
         keepalive: true,  // lets a save sent from pagehide finish after the tab closes
-      }).then(function (res) { return res.ok; }, function () { return false; });
+      }).then(function (res) { return res.json(); })
+        .then(function (data) { return !!(data && data.success); }, function () { return false; });
     } catch (err) {
       return Promise.resolve(false);
     }

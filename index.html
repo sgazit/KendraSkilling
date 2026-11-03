@@ -378,7 +378,7 @@
     if (p.status === 'completed' || retaking) {
       return { cls: 'completed', text: retaking ? 'Completed · retake in progress' : 'Completed ✓' };
     }
-    if (p.status === 'in_progress' && p.answered > 0) {
+    if (p.status === 'in_progress') {
       return { cls: 'in-progress', text: 'In progress' };
     }
     return null;

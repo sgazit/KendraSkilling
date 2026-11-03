@@ -251,20 +251,27 @@ function reportProgress(session, status) {
 }
 
 /**
- * Picks the more advanced of this browser's saved session and the server copy,
- * so a participant can pick up on another device. Returns an incomplete session or null.
+ * Merges this browser's saved session with the server copy so the two line up
+ * even if the last save to either side was lost (closed tab, failed request).
+ * Answers are combined by question; if both sides answered the same question,
+ * the more advanced copy wins. Returns an incomplete session or null.
  */
 function chooseResumeSession(local, remote, name, email, ndaApprovedAt) {
-  const localIdx = local && !local.complete ? local.currentIdx : -1;
-  const remoteState = remote && remote.status === 'in_progress' && remote.state;
-  if (remoteState && remoteState.answers && remoteState.currentIdx > localIdx && remoteState.currentIdx > 0) {
-    const session = createSession(name, email, ndaApprovedAt);
-    session.answers    = remoteState.answers;
-    session.currentIdx = remoteState.currentIdx;
-    session.startedAt  = remote.startedAt || session.startedAt;
-    return session;
-  }
-  return localIdx >= 0 ? local : null;
+  const localOk  = local && !local.complete;
+  const remoteState = remote && remote.status === 'in_progress' && remote.state && remote.state.answers ? remote.state : null;
+  if (!localOk && !remoteState) return null;
+  if (!remoteState) return local;
+
+  const base = localOk ? local : createSession(name, email, ndaApprovedAt);
+  const remoteAhead = !localOk || remoteState.currentIdx > local.currentIdx;
+  const merged = Object.assign({}, base, {
+    answers:    remoteAhead
+                  ? Object.assign({}, local && localOk ? local.answers : {}, remoteState.answers)
+                  : Object.assign({}, remoteState.answers, local.answers),
+    currentIdx: Math.max(localOk ? local.currentIdx : 0, remoteState.currentIdx || 0),
+    startedAt:  (localOk && local.startedAt) || remote.startedAt || base.startedAt,
+  });
+  return merged.currentIdx > 0 || localOk ? merged : null;
 }
 
 /* ─────────────────────────────────────────
@@ -393,6 +400,9 @@ async function handleLoginSubmit(rawName, rawEmail, rawPasscode, ndaApprovedAt) 
   const existing = chooseResumeSession(loadSession(name), remote, name, email, ndaApprovedAt);
 
   if (existing) {
+    // Write the merged copy back to both sides so they stay aligned
+    saveSession(existing);
+    reportProgress(existing);
     // Resume prompt
     setState({ screen: 'resume', session: Object.assign({}, existing, { email: email, ndaApprovedAt: existing.ndaApprovedAt || new Date().toISOString() }), loadError: null });
   } else {
@@ -441,6 +451,7 @@ function handleNext() {
   saveSession(newSession);
 
   if (complete) {
+    reportProgress(newSession);  // final answers reach the Progress tab right away, before the slower submit
     setState({ screen: 'complete', session: newSession, selectedValue: null, submitStatus: 'saving', submitErrorMsg: null });
     submitCompletedSession(newSession);
   } else {
@@ -453,7 +464,10 @@ function handleNext() {
 async function submitCompletedSession(session) {
   try {
     await submitResults(session);
-    reportProgress(session, 'completed');
+    // Wait for the 'completed' status to be confirmed (one retry) so "saved" and the Done
+    // button only appear once the Progress tab is up to date. A failure here is not shown
+    // to the participant: their answers are already in the Responses sheet.
+    if (!(await reportProgress(session, 'completed'))) await reportProgress(session, 'completed');
     setState({ submitStatus: 'saved', submitErrorMsg: null });
   } catch (err) {
     setState({ submitStatus: 'error', submitErrorMsg: err.message });
@@ -809,6 +823,13 @@ function bindEvents() {
     case 'complete': {
       const retryBtn = document.getElementById('retry-submit-btn');
       if (retryBtn) retryBtn.addEventListener('click', handleRetrySubmit);
+      // Leaving mid-save can cancel the final saves, so hold the Done link until they finish.
+      document.getElementById('done-btn').addEventListener('click', function (e) {
+        if (state.submitStatus === 'saving') {
+          e.preventDefault();
+          showToast('Still saving your answers, one moment…');
+        }
+      });
       break;
     }
   }
