@@ -58,12 +58,13 @@ const KENDRA_LOGO_SVG =
     '<circle cx="100" cy="100" r="6" fill="#6422C9"/>' +
   '</svg>';
 
+// Listed top to bottom as shown on screen: Strongly agree (5) first, Strongly disagree (1) last.
 const LIKERT_OPTIONS = [
-  { value: 1, label: 'Strongly disagree' },
-  { value: 2, label: 'Disagree'          },
-  { value: 3, label: 'Neutral'           },
-  { value: 4, label: 'Agree'             },
   { value: 5, label: 'Strongly agree'    },
+  { value: 4, label: 'Agree'             },
+  { value: 3, label: 'Neutral'           },
+  { value: 2, label: 'Disagree'          },
+  { value: 1, label: 'Strongly disagree' },
 ];
 
 /* ─────────────────────────────────────────

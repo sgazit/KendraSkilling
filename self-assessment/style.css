@@ -66,6 +66,7 @@ body {
 .screen {
   width: 100%;
   max-width: 600px;
+  flex: 0 0 auto;            /* same card width for every question, whatever the text length */
   animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -348,6 +349,7 @@ input[type="email"]:focus {
   line-height: 1.55;
   color: var(--text-primary);
   margin-bottom: 1.75rem;
+  min-height: 4.65em;        /* room for 3 lines, so the card is the same height for every question */
 }
 
 /* Likert options */
@@ -619,7 +621,7 @@ input[type="email"]:focus {
   .complete-card { padding: 1.5rem; }
 
   .login-heading { font-size: 22px; }
-  .q-statement   { font-size: 17px; }
+  .q-statement   { font-size: 17px; min-height: 7.75em; } /* 5 lines on a narrow phone */
 
   .complete-stats { grid-template-columns: 1fr; }
 

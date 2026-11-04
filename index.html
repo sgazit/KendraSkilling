@@ -92,6 +92,12 @@
     margin: 0 auto;
   }
 
+  .hub-header p#hub-tip {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
   .assessment-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -301,6 +307,7 @@
     </div>
     <h1>Kendra Skilling</h1>
     <p id="hub-sub">Sign in to get started.</p>
+    <p id="hub-tip" hidden>Tip: you can use the keyboard to answer the questions, no mouse needed.</p>
   </div>
 
   <div class="login-card" id="login-card">
@@ -399,6 +406,7 @@
     $('assessments').hidden = false;
     $('signed-in-name').textContent = login.name;
     $('hub-sub').textContent = 'Choose an assessment below to get started.';
+    $('hub-tip').hidden = false;
     loadStatuses(login);
   }
 
@@ -407,6 +415,7 @@
     $('login-card').hidden = false;
     $('assessments').hidden = true;
     $('hub-sub').textContent = 'Sign in to get started.';
+    $('hub-tip').hidden = true;
     $('first-name').focus();
   }
 
