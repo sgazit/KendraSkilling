@@ -318,6 +318,9 @@
     <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
     <label class="field-label" for="passcode" id="passcode-label">Password</label>
     <input type="password" id="passcode" placeholder="Provided by your Kendra Practitioner" autocomplete="off">
+    <label class="field-label" for="job-title">Job title</label>
+    <input type="text" id="job-title" list="job-titles" maxlength="80" autocomplete="organization-title">
+    <datalist id="job-titles"></datalist>
     <label class="nda-label">
       <input type="checkbox" id="nda">
       <span>I have read and approve the <a href="nda/" target="_blank" rel="noopener">Kendra Terms and Conditions</a>.</span>
@@ -417,11 +420,27 @@
     $('login-error').classList.toggle('visible', !!msg);
   }
 
-  async function verifyLogin(email, passcode) {
+  // Fill the job-title suggestions with titles many participants share. Best effort: no list is fine.
+  async function loadTitleSuggestions() {
+    try {
+      const res = await fetch(VERIFY_URL + '?action=titles');
+      const data = await res.json();
+      const list = $('job-titles');
+      (data.titles || []).slice(0, 100).forEach((t) => {
+        const o = document.createElement('option');
+        o.value = t;
+        list.appendChild(o);
+      });
+    } catch (err) { /* ignore */ }
+  }
+  loadTitleSuggestions();
+
+  async function verifyLogin(email, passcode, jobTitle) {
     let data;
     try {
       const res = await fetch(VERIFY_URL + '?action=verify&email=' + encodeURIComponent(email) +
-                              '&password=' + encodeURIComponent(passcode));
+                              '&password=' + encodeURIComponent(passcode) +
+                              (jobTitle ? '&title=' + encodeURIComponent(jobTitle) : ''));
       if (!res.ok) throw new Error();
       data = await res.json();
     } catch (err) {
@@ -435,11 +454,12 @@
   async function signIn() {
     if (btn.disabled) return;
     const [first, last, email, passcode] = fields.map((f) => f.value.trim());
+    const jobTitle = $('job-title').value.trim().replace(/\s+/g, ' ');
     btn.disabled = true;
     btn.textContent = 'Signing in…';
     showError('');
     try {
-      await verifyLogin(email, passcode);
+      await verifyLogin(email, passcode, jobTitle);
     } catch (err) {
       showError(err.message);
       btn.textContent = 'Sign in';
@@ -464,6 +484,7 @@
     f.addEventListener('input', refreshBtn);
     f.addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
   });
+  $('job-title').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
   $('nda').addEventListener('change', refreshBtn);
   btn.addEventListener('click', signIn);
   $('sign-out').addEventListener('click', () => {
