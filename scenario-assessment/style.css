@@ -405,24 +405,6 @@ body {
   line-height: 1.6;
   flex: 1;
 }
-.skip-btn {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font);
-  padding: 2px 0;
-  white-space: nowrap;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color var(--transition);
-  flex-shrink: 0;
-}
-.skip-btn:hover { color: var(--text-secondary); }
-.skip-btn:disabled { opacity: .6; cursor: default; text-decoration: none; }
-
 /* ── Answer options ── */
 .options-list {
   display: flex;
@@ -480,6 +462,15 @@ body {
   animation: popIn 320ms cubic-bezier(.34,1.56,.64,1);
 }
 
+.option-label:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Skip option, last in the list */
+.option-label.option-skip .option-text { color: var(--text-muted); }
+.option-label.option-skip.selected .option-text { color: var(--text-primary); }
+
 /* ── Scenario nav ── */
 .scenario-nav {
   display: flex;
@@ -489,6 +480,9 @@ body {
   padding-top: 24px;
   border-top: 1px solid var(--border);
 }
+
+.scenario-nav { gap: 16px; }
+.scenario-nav .next-btn { width: auto; margin-top: 0; padding: 11px 32px; font-size: 15px; }
 
 /* ── Review screen ── */
 .review-header {

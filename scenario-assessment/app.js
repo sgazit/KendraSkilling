@@ -380,6 +380,7 @@ function renderScenario(idx) {
 // ── Question renderer, one question at a time, no way back ──
 function renderQuestion(idx) {
   advanceScheduled = false;
+  pendingChoice = null;
   const sc = SCENARIOS[idx];
   const qi = state.currentQuestion;
   const q = sc.questions[qi];
@@ -390,11 +391,18 @@ function renderQuestion(idx) {
   let optionsHtml = q.options.map((opt, oi) => {
     const letter = LETTERS[oi];
     return `
-      <label class="option-label" data-qid="${q.id}" data-letter="${letter}" role="radio" aria-checked="false">
+      <label class="option-label" data-qid="${q.id}" data-letter="${letter}" role="radio" aria-checked="false" tabindex="0">
         <div class="option-letter">${letter}</div>
         <div class="option-text">${opt}</div>
       </label>`;
   }).join("");
+
+  // Last option: skipping, which scores 0
+  optionsHtml += `
+      <label class="option-label option-skip" data-qid="${q.id}" data-letter="${SKIP_CHOICE}" role="radio" aria-checked="false" tabindex="0">
+        <div class="option-letter">S</div>
+        <div class="option-text">Skip (Scores 0)</div>
+      </label>`;
 
   document.getElementById("questions-section").innerHTML = `
     <div class="question-block" id="qblock-${q.id}">
@@ -410,40 +418,89 @@ function renderQuestion(idx) {
     </div>`;
 
   document.getElementById("scenario-nav").innerHTML = `
-    <span style="font-size:12px;color:var(--text-muted);line-height:1.5;">Choosing an answer moves you to the next question; there's no going back.</span>
-    <button class="skip-btn" id="btn-skip" style="flex-shrink:0;">Skip, scores 0</button>`;
+    <span style="font-size:12px;color:var(--text-muted);line-height:1.5;">Choose an answer (click, or press its letter; S to skip), then click Next or press Enter. Once you move on there's no going back.</span>
+    <button class="btn btn-primary next-btn" id="btn-next" style="flex-shrink:0;" disabled>Next</button>`;
 
-  // Bind option clicks
+  // Bind option clicks: they only select; Next commits
   document.querySelectorAll(`.option-label[data-qid="${q.id}"]`).forEach(label => {
-    label.addEventListener("click", () => chooseAnswer(q.id, label.dataset.letter));
+    label.addEventListener("click", () => selectOption(q.id, label.dataset.letter));
   });
 
-  // Bind skip
-  const skipBtn = document.getElementById("btn-skip");
-  if (skipBtn) skipBtn.addEventListener("click", () => skipCurrentQuestion(q.id));
+  document.getElementById("btn-next").addEventListener("click", () => onNext(q.id));
 }
 
+const SKIP_CHOICE = "S";
 let advanceScheduled = false;
+let pendingChoice = null; // letter (or SKIP_CHOICE) highlighted on the current question, not yet committed
 
-function chooseAnswer(qid, letter) {
-  if (advanceScheduled || qid in state.answers) return; // guard against double-fire (e.g. label→input click forwarding)
-  advanceScheduled = true;
-  state.answers[qid] = letter;
-  saveState();
+function selectOption(qid, letter) {
+  if (advanceScheduled || qid in state.answers) return;
+  pendingChoice = letter;
   document.querySelectorAll(`.option-label[data-qid="${qid}"]`).forEach(l => {
     l.classList.toggle("selected", l.dataset.letter === letter);
     l.setAttribute("aria-checked", l.dataset.letter === letter ? "true" : "false");
   });
-  const list = document.getElementById(`options-${qid}`);
-  if (list) list.classList.add("locked");
-  const skipBtn = document.getElementById("btn-skip");
-  if (skipBtn) skipBtn.disabled = true;
-  setTimeout(advanceFlow, 550);
+  const nextBtn = document.getElementById("btn-next");
+  if (nextBtn) nextBtn.disabled = false;
 }
 
-function skipCurrentQuestion(qid) {
+// ── Keyboard: letter = choose, S = skip, Up/Down = move choice, Enter = Next ──
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (document.getElementById("skip-modal")) return; // the confirm box handles its own keys
+  const screen = document.getElementById("screen-scenario");
+  if (!screen || !screen.classList.contains("active")) return;
+  const labels = Array.from(document.querySelectorAll("#questions-section .option-label"));
+  if (!labels.length) return;
+  const t = e.target;
+  if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+  const qid = labels[0].dataset.qid;
+  const pick = (label) => { if (label) { selectOption(qid, label.dataset.letter); label.focus(); } };
+  const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+
+  const byLetter = labels.find(l => l.dataset.letter === key);
+  if (byLetter) { e.preventDefault(); pick(byLetter); return; }
+
+  if (key === "ArrowDown" || key === "ArrowUp") {
+    e.preventDefault();
+    const cur = labels.findIndex(l => l.dataset.letter === pendingChoice);
+    const step = key === "ArrowDown" ? 1 : -1;
+    pick(labels[cur === -1 ? (step === 1 ? 0 : labels.length - 1) : (cur + step + labels.length) % labels.length]);
+    return;
+  }
+
+  if (key === " " && t && t.classList && t.classList.contains("option-label")) {
+    e.preventDefault();
+    pick(t);
+    return;
+  }
+
+  // Enter = Next. A focused button handles Enter itself (it fires a click), so don't double up.
+  if (key === "Enter" && !(t && t.tagName === "BUTTON")) {
+    e.preventDefault();
+    onNext(qid);
+  }
+});
+
+function onNext(qid) {
+  if (advanceScheduled || qid in state.answers || !pendingChoice) return;
+  if (pendingChoice === SKIP_CHOICE) {
+    showSkipConfirm(() => commitAnswer(qid, null));
+  } else {
+    commitAnswer(qid, pendingChoice);
+  }
+}
+
+function commitAnswer(qid, value) {
   if (advanceScheduled || qid in state.answers) return; // guard against double-fire
-  showSkipConfirm(() => performSkip(qid));
+  advanceScheduled = true;
+  state.answers[qid] = value; // null = skipped
+  saveState();
+  const list = document.getElementById(`options-${qid}`);
+  if (list) list.classList.add("locked");
+  const nextBtn = document.getElementById("btn-next");
+  if (nextBtn) nextBtn.disabled = true;
+  advanceFlow();
 }
 
 // Branded confirm dialog (native confirm() shows the site's hostname as its title)
@@ -468,18 +525,6 @@ function showSkipConfirm(onConfirm) {
   document.getElementById("skip-modal-cancel").addEventListener("click", close);
   document.getElementById("skip-modal-ok").addEventListener("click", () => { close(); onConfirm(); });
   document.getElementById("skip-modal-ok").focus();
-}
-
-function performSkip(qid) {
-  if (advanceScheduled || qid in state.answers) return;
-  advanceScheduled = true;
-  state.answers[qid] = null;
-  saveState();
-  const list = document.getElementById(`options-${qid}`);
-  if (list) list.classList.add("locked");
-  const skipBtn = document.getElementById("btn-skip");
-  if (skipBtn) { skipBtn.disabled = true; skipBtn.textContent = "Skipped"; }
-  setTimeout(advanceFlow, 400);
 }
 
 // ── Advance, forward only, one question/scenario at a time ──
