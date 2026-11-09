@@ -518,7 +518,7 @@ function renderLogin() {
           '<div class="brand-mark">' + KENDRA_LOGO_SVG + '</div>' +
           '<span class="brand-name">Kendra Skilling</span>' +
         '</div>' +
-        '<h1 class="display-heading login-heading">Skills Snapshot</h1>' +
+        '<h1 class="display-heading login-heading">Self Assessment</h1>' +
         '<p class="login-desc">' +
           'A quick self-check across your technical skills. ' +
           'Be honest with your answers, there\'s no right or wrong here. ' +
@@ -716,8 +716,9 @@ function renderComplete() {
         '</div>' +
         '<h2 class="display-heading complete-heading">Well done, ' + esc(s.name) + '</h2>' +
         '<p class="complete-sub">' +
-          'You\'ve completed the Skills Snapshot. ' +
-          'Thanks for taking the time to reflect honestly on each statement.' +
+          'Thanks for completing this assessment.<br>' +
+          'Please make sure you have completed both the Self Assessment and the Engineer Assessment. ' +
+          'Your Kendra Profile will be prepared once both are done and shared with you soon.' +
         '</p>' +
         renderSavedIndicator() +
         '<div class="complete-stats">' +
