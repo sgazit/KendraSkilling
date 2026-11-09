@@ -718,7 +718,7 @@ function renderComplete() {
         '<p class="complete-sub">' +
           'Thanks for completing this assessment.<br>' +
           'Please make sure you have completed both the Self Assessment and the Engineer Assessment. ' +
-          'Your Kendra Profile will be prepared once both are done and shared with you soon.' +
+          'Your Kendra Profile will be prepared once both are done and shared with you shortly thereafter.' +
         '</p>' +
         renderSavedIndicator() +
         '<div class="complete-stats">' +
