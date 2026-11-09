@@ -63,12 +63,19 @@ body {
   padding: 2.5rem 1rem 4rem;
 }
 
+/* #screen-container is the flex item of #app; without an explicit width it
+   shrink-wraps its content, so the card width followed the statement length. */
+#screen-container {
+  flex: 0 0 min(600px, 100%);
+  width: min(600px, 100%);
+  min-width: 0;
+}
+
 .screen {
   box-sizing: border-box;
   width: min(600px, 100%);   /* fixed width for every screen, whatever the text length */
   min-width: 0;
   max-width: 600px;
-  flex: 0 0 min(600px, 100%);
   animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
