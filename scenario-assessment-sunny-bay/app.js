@@ -253,6 +253,11 @@ async function handleBegin() {
   if (!state.startedAt) state.startedAt = new Date().toISOString();
   if (!state.ndaApprovedAt) state.ndaApprovedAt = new Date().toISOString();
   saveState();
+  // Everything already answered (e.g. the page was reloaded while saving): go straight to saving.
+  if (STAGES.every(u => u.questions.every(q => q.id in state.answers))) {
+    finishAssessment();
+    return;
+  }
   renderStage(state.currentStage);
   showScreen("screen-scenario");
 }
@@ -500,66 +505,44 @@ function advanceFlow() {
     renderStage(state.currentStage);
     showScreen("screen-scenario");
   } else {
-    renderReview();
-    showScreen("screen-review");
+    finishAssessment();
   }
-}
-
-// ── Review screen ──────────────────────────────────
-function renderReview() {
-  document.getElementById("review-greeting").textContent = `Almost done, ${state.name}!`;
-
-  let totalSkipped = 0;
-  let listHtml = STAGES.map(stage => {
-    const answered = stage.questions.filter(q => state.answers[q.id] && state.answers[q.id] !== null).length;
-    const skipped = stage.questions.filter(q => state.answers[q.id] === null).length;
-    totalSkipped += skipped;
-    const skippedNote = skipped > 0 ? ` <span style="color:var(--text-muted)">(${skipped} skipped)</span>` : "";
-    return `
-      <div class="review-scenario-row">
-        <div>
-          <div class="review-scenario-name">${stage.title}</div>
-          <div class="review-scenario-count">${answered} / ${stage.questions.length} answered${skippedNote}</div>
-        </div>
-        <div class="review-check">✅</div>
-      </div>`;
-  }).join("");
-  document.getElementById("review-scenarios-list").innerHTML = listHtml;
-
-  document.getElementById("review-identity").innerHTML =
-    `<strong>${state.name}</strong> &nbsp;·&nbsp; ${state.email}`;
-
-  const warn = document.getElementById("review-skipped-warning");
-  if (totalSkipped > 0) {
-    warn.textContent = `⚠️  ${totalSkipped} question${totalSkipped > 1 ? 's were' : ' was'} skipped and will receive a score of 0.`;
-    warn.classList.add("visible");
-  } else {
-    warn.classList.remove("visible");
-  }
-
-  document.getElementById("btn-submit").onclick = submitAssessment;
 }
 
 // ── Submission ─────────────────────────────────────
+// Called after the last answer: shows the closing screen straight away and saves in the background.
+function finishAssessment() {
+  document.getElementById("thankyou-name").textContent = `Thank you, ${state.name}!`;
+  document.getElementById("btn-done").style.display = "none";
+  showScreen("screen-thankyou");
+  setSaveIndicator("saving");
+  submitAssessment();
+}
+
+function setSaveIndicator(status) {
+  const el = document.getElementById("save-indicator");
+  if (status === "saved") {
+    el.className = "saved-indicator";
+    el.innerHTML = "✓ Your answers have been saved.";
+  } else if (status === "error") {
+    el.className = "saved-indicator saved-indicator-error";
+    el.innerHTML = "Couldn't save your answers. <button class=\"saved-retry-btn\" id=\"btn-retry-save\">Retry</button>";
+    document.getElementById("btn-retry-save").onclick = () => { setSaveIndicator("saving"); submitAssessment(); };
+  } else {
+    el.className = "saved-indicator saved-indicator-pending";
+    el.innerHTML = '<span class="saved-spinner"></span>Saving your answers…';
+  }
+}
+
 async function submitAssessment() {
-  const btn = document.getElementById("btn-submit");
-  const label = document.getElementById("submit-label");
-  const spinner = document.getElementById("submit-spinner");
-  const errBox = document.getElementById("submit-error");
-
-  btn.disabled = true;
-  label.textContent = "Submitting…";
-  spinner.classList.add("visible");
-  errBox.classList.remove("visible");
-
   // Build payload row
   const payload = {
     timestamp: new Date().toISOString(),
     name: state.name,
     email: state.email,
   };
-  STAGES.forEach(stage => {
-    stage.questions.forEach(q => {
+  STAGES.forEach(unit => {
+    unit.questions.forEach(q => {
       payload[q.id] = state.answers[q.id] ?? "SKIPPED";
     });
   });
@@ -575,14 +558,11 @@ async function submitAssessment() {
     });
     // no-cors means we can't read response, assume success
     clearState();
-    document.getElementById("thankyou-name").textContent = `Thank you, ${state.name}!`;
-    showScreen("screen-thankyou");
+    setSaveIndicator("saved");
+    document.getElementById("btn-done").style.display = "";
     launchConfetti();
   } catch (err) {
-    btn.disabled = false;
-    label.textContent = "Submit Assessment";
-    spinner.classList.remove("visible");
-    errBox.classList.add("visible");
+    setSaveIndicator("error");
   }
 }
 

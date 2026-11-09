@@ -93,29 +93,6 @@
     <!-- populated by JS -->
   </div>
 
-  <!-- ── REVIEW ── -->
-  <div id="screen-review" class="screen">
-    <div class="card">
-      <div class="review-header">
-        <h2 id="review-greeting">Almost done!</h2>
-        <p>Please review your answers below before submitting.</p>
-      </div>
-      <div id="review-scenarios-list"></div>
-      <div class="review-info" id="review-identity"></div>
-      <div class="review-warning" id="review-skipped-warning"></div>
-      <div style="margin-top:28px;">
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Once submitted, your answers cannot be changed.</p>
-        <button class="btn btn-primary" id="btn-submit">
-          <span id="submit-label">Submit Assessment</span>
-          <span class="spinner" id="submit-spinner"></span>
-        </button>
-        <div class="submit-error" id="submit-error">
-          Something went wrong submitting your responses. Please try again, or contact the assessment administrator.
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ── THANK YOU ── -->
   <div id="screen-thankyou" class="screen">
     <div class="card">
@@ -124,7 +101,8 @@
         <div class="thankyou-icon"><svg width="64" height="64" viewBox="0 0 200 200"><use href="#kendra-mark"/></svg></div>
         <h2 id="thankyou-name">Thank you!</h2>
         <p>Thanks for completing this assessment.<br>Please make sure you have completed both the Self Assessment and the Engineer Assessment. Your Kendra Profile will be prepared once both are done and shared with you soon.</p>
-        <a class="btn btn-primary" href="../" style="margin-top:24px;">Done</a>
+        <div class="saved-indicator saved-indicator-pending" id="save-indicator" aria-live="polite"></div>
+        <a class="btn btn-primary" id="btn-done" href="../" style="margin-top:12px;display:none;">Done</a>
       </div>
     </div>
   </div>

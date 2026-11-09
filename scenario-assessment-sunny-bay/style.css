@@ -777,3 +777,42 @@ body {
 }
 .nda-label a { color: var(--accent); font-weight: 600; }
 .nda-label a:hover { color: var(--accent-hover); }
+
+/* ── Saving indicator (thank-you screen) ── */
+.saved-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #10B5A4;
+  background: #E8F9F6;
+  padding: 8px 14px;
+  border-radius: 99px;
+  margin: 16px auto 0;
+  max-width: 100%;
+}
+.saved-indicator-pending { color: var(--text-secondary); background: var(--bg); }
+.saved-indicator-error { color: #F2547D; background: #FDECF1; }
+.saved-spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-secondary);
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+.saved-retry-btn {
+  border: none;
+  background: none;
+  color: #F2547D;
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
