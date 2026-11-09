@@ -429,17 +429,85 @@
     $('login-error').classList.toggle('visible', !!msg);
   }
 
-  // Fill the job-title suggestions with titles many participants share. Best effort: no list is fine.
+  // Job-title suggestions: the standard titles below are always offered, followed by titles many
+  // participants share (from the Users sheet). Duplicates are merged, and a near-miss spelling of a
+  // standard title (a typo) is shown as the correct standard title.
+  const DEFAULT_TITLES = [
+    'Intern',
+    'Associate Software Engineer',
+    'Software Engineer',
+    'Senior Software Engineer',
+    'Staff Engineer',
+    'Principal Engineer',
+    'Product Manager',
+    'Senior Product Manager',
+    'Principal Product Manager',
+    'Engineering Manager',
+    'Group Engineering Manager',
+    'Director of Engineering',
+  ];
+
+  const titleKey = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+  function editDistance(a, b) {
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
+  // The standard title this one is a typo of, or '' if it is not close to any. Needs the same number of
+  // words, so a different level such as "Software Engineer II" is never folded into "Software Engineer".
+  function standardTitleFor(title) {
+    const key = titleKey(title);
+    const words = title.trim().split(/\s+/).length;
+    for (const std of DEFAULT_TITLES) {
+      const sk = titleKey(std);
+      if (key === sk) return std;
+      if (std.split(' ').length !== words) continue;
+      if (editDistance(key, sk) <= Math.max(1, Math.floor(sk.length / 6))) return std;
+    }
+    return '';
+  }
+
+  function buildTitleSuggestions(serverTitles) {
+    const seen = new Set();
+    const out = [];
+    const add = (t) => {
+      const k = titleKey(t);
+      if (!k || seen.has(k)) return;
+      seen.add(k);
+      out.push(t);
+    };
+    DEFAULT_TITLES.forEach(add);
+    serverTitles.forEach((t) => {
+      t = String(t || '').replace(/\s+/g, ' ').trim();
+      if (t) add(standardTitleFor(t) || t);
+    });
+    return out;
+  }
+
+  function fillTitleSuggestions(serverTitles) {
+    const list = $('job-titles');
+    list.innerHTML = '';
+    buildTitleSuggestions(serverTitles).slice(0, 100).forEach((t) => {
+      const o = document.createElement('option');
+      o.value = t;
+      list.appendChild(o);
+    });
+  }
+
   async function loadTitleSuggestions() {
+    fillTitleSuggestions([]);   // the standard titles show even if the lookup below fails
     try {
       const res = await fetch(VERIFY_URL + '?action=titles');
       const data = await res.json();
-      const list = $('job-titles');
-      (data.titles || []).slice(0, 100).forEach((t) => {
-        const o = document.createElement('option');
-        o.value = t;
-        list.appendChild(o);
-      });
+      fillTitleSuggestions(data.titles || []);
     } catch (err) { /* ignore */ }
   }
   loadTitleSuggestions();
