@@ -461,7 +461,9 @@ document.addEventListener("keydown", (e) => {
   if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
   const qid = labels[0].dataset.qid;
   const pick = (label) => { if (label) { selectOption(qid, label.dataset.letter); label.focus(); } };
-  const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  // Use the physical key (KeyA..KeyZ) so letters work on non-Latin keyboard layouts (e.g. Hebrew) too.
+  const codeLetter = /^Key([A-Z])$/.exec(e.code || "");
+  const key = codeLetter ? codeLetter[1] : (e.key.length === 1 ? e.key.toUpperCase() : e.key);
 
   const byLetter = labels.find(l => l.dataset.letter === key);
   if (byLetter) { e.preventDefault(); pick(byLetter); return; }
