@@ -512,11 +512,49 @@
   }
   loadTitleSuggestions();
 
-  async function verifyLogin(email, passcode, jobTitle) {
+  // Returning visitors: once a valid email is typed, fill in the first name, last name and job title they
+  // gave last time. Never the password. Only fields that are empty, or still hold an earlier pre-fill, are
+  // touched, so nothing the person typed is overwritten. Changes are saved on a successful sign-in.
+  const prefillFields = [
+    ['first-name', 'firstName'],
+    ['last-name', 'lastName'],
+    ['job-title', 'title'],
+  ];
+  prefillFields.forEach(([id]) => {
+    $(id).addEventListener('input', () => { $(id).dataset.prefilled = ''; });
+  });
+  let lastLookup = '';
+
+  async function prefillProfile() {
+    const email = $('email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.toLowerCase() === lastLookup) return;
+    lastLookup = email.toLowerCase();
+    try {
+      const res = await fetch(VERIFY_URL + '?action=profile&email=' + encodeURIComponent(email));
+      if (!res.ok) return;
+      const data = await res.json();
+      if ($('email').value.trim().toLowerCase() !== lastLookup) return;   // email changed meanwhile
+      prefillFields.forEach(([id, key]) => {
+        const el = $(id);
+        const value = String(data[key] || '').trim();
+        if (value && (!el.value.trim() || el.dataset.prefilled === '1')) {
+          el.value = value;
+          el.dataset.prefilled = '1';
+        }
+      });
+      refreshBtn();
+    } catch (err) { /* ignore: typing the details by hand still works */ }
+  }
+  $('email').addEventListener('change', prefillProfile);
+  $('email').addEventListener('blur', prefillProfile);
+
+  async function verifyLogin(email, passcode, jobTitle, first, last) {
     let data;
     try {
       const res = await fetch(VERIFY_URL + '?action=verify&email=' + encodeURIComponent(email) +
                               '&password=' + encodeURIComponent(passcode) +
+                              '&first=' + encodeURIComponent(first || '') +
+                              '&last=' + encodeURIComponent(last || '') +
                               (jobTitle ? '&title=' + encodeURIComponent(jobTitle) : ''));
       if (!res.ok) throw new Error();
       data = await res.json();
@@ -536,7 +574,7 @@
     btn.textContent = 'Signing in…';
     showError('');
     try {
-      await verifyLogin(email, passcode, jobTitle);
+      await verifyLogin(email, passcode, jobTitle, first, last);
     } catch (err) {
       showError(err.message);
       btn.textContent = 'Sign in';
